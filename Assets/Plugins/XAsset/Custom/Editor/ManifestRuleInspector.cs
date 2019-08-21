@@ -24,7 +24,7 @@ namespace Plugins.XAsset.Editor
         string addRulePath = AssetRoot;
         bool isSelect = false;
         BuildType selectBuildType = BuildType.Package;
-        List<string> unAddFolder = new List<string>();
+        List<string> unAddFolderOrFiles = new List<string>();
         ManifestRule t;
 
         void OnEnable()
@@ -34,9 +34,22 @@ namespace Plugins.XAsset.Editor
         }
 
         void RefreshUnAdd()
-        { 
-            unAddFolder.Clear();
-            GetSubFolder(fullAssetRoot, ref unAddFolder);
+        {
+            unAddFolderOrFiles.Clear();
+            GetSubFolder(fullAssetRoot, ref unAddFolderOrFiles);
+
+            UtilIO.GetSubFile(fullAssetRoot, ref unAddFolderOrFiles, (p) =>
+            {
+                if (t.ignorePaths.Exists((o) => { return o == p; }))
+                {
+                    return false;
+                }
+                if (t.ruleInfos.Exists((o) => { return o.path == p; }))
+                {
+                    return false;
+                }
+                return true;
+            });
         }
 
         private void GetSubFolder(string folder, ref List<string> list)
@@ -52,7 +65,7 @@ namespace Plugins.XAsset.Editor
                     return false;
                 }
                 return true;
-            });
+            }); 
         }
 
         public override void OnInspectorGUI()
@@ -95,31 +108,31 @@ namespace Plugins.XAsset.Editor
             {
                 EditorGUILayout.BeginVertical("box");
                 {
-                    EditorGUI.indentLevel++; 
+                    EditorGUI.indentLevel++;
 
-                    EditorGUILayout.LabelField("Count", unAddFolder.Count.ToString());
+                    EditorGUILayout.LabelField("Count", unAddFolderOrFiles.Count.ToString());
                     if (GUILayout.Button("刷新"))
                     {
                         RefreshUnAdd();
                     }
 
-                    if (unAddFolder.Count > 0)
+                    if (unAddFolderOrFiles.Count > 0)
                     {
-                        for (int i = 0; i < unAddFolder.Count; i++)
+                        for (int i = 0; i < unAddFolderOrFiles.Count; i++)
                         {
-                            string folder = unAddFolder[i];
-                            currentState = GetState("Folder:" + folder);
+                            string item = unAddFolderOrFiles[i];
+                            currentState = GetState("Un Folder Or File List:" + item);
                             if (currentState)
                             {
                                 if (GUILayout.Button("Add Rule"))
                                 {
-                                    t.AddRule(folder);
+                                    t.AddRule(item);
                                     RefreshUnAdd();
                                     break;
                                 }
                                 if (GUILayout.Button("Add Ignore"))
                                 {
-                                    t.AddIgnore(folder);
+                                    t.AddIgnore(item);
                                     RefreshUnAdd();
                                     break;
                                 }
@@ -281,25 +294,9 @@ namespace Plugins.XAsset.Editor
                                         t.RemoveRule(value.path);
                                         break;
                                     }
-                                    if (new DirectoryInfo(value.path).GetDirectories().Length > 0)
-                                    {
-                                        if (GUILayout.Button("拆分子目录并添加"))
-                                        {
-                                            List<string> list = new List<string>();
-                                            GetSubFolder(value.path, ref list);
-                                            list.ForEach((_path) =>
-                                            {
-                                                t.AddRule(_path);
-                                            });
-                                            break;
-                                        }
 
-                                        if (GUILayout.Button("删除所有子目录"))
-                                        {
-                                            t.ruleInfos.RemoveAll((p) => { return p.path.Contains(value.path) && p.path != value.path; });
-                                            break;
-                                        }
-                                    }
+                                    DrawSubDir(value.path);
+
                                 }
                                 EditorGUILayout.EndVertical();
                                 EditorGUILayout.Separator();
@@ -316,6 +313,60 @@ namespace Plugins.XAsset.Editor
 
                 EditorGUILayout.Separator();
             }
+        }
+
+        private void DrawSubDir(string path)
+        {
+            DirectoryInfo dir = new DirectoryInfo(path);
+            if (dir.Exists)
+            {
+                DirectoryInfo[] sub = dir.GetDirectories();
+                if (sub.Length == 0 || (sub.Length == 1 && UtilIO.GetUnityAssetPath(sub[0].FullName) == path))
+                {
+                    return;
+                }
+
+                bool currentState = GetState("Sub Directory:" + path);
+                if (currentState)
+                {
+                    EditorGUI.indentLevel++;
+                    if (dir.Exists)
+                    {
+                        if (sub.Length > 0)
+                        {
+                            if (GUILayout.Button("删除所有子目录"))
+                            {
+                                t.ruleInfos.RemoveAll((p) => { return p.path.Contains(path) && p.path != path; });
+                            }
+
+                            List<string> list = new List<string>();
+                            GetSubFolder(path, ref list);
+                            if (list.Count > 0)
+                            {
+                                if (GUILayout.Button("拆分子目录并添加"))
+                                {
+                                    if (list.Count > 0)
+                                    {
+                                        list.ForEach((_path) =>
+                                        {
+                                            t.AddRule(_path);
+                                        });
+                                    }
+                                }
+
+                                list.ForEach((_path) =>
+                                {
+                                    EditorGUILayout.LabelField(_path); 
+                                }); 
+                            }
+                        }
+                    }
+                    EditorGUILayout.Separator();
+
+                    EditorGUI.indentLevel--;
+                }
+            }
+
         }
 
         private bool GetState(string fullName, int indexLevel = -1)

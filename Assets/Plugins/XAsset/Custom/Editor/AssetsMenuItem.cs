@@ -52,7 +52,7 @@ namespace Plugins.XAsset.Editor
             ManifestRule manifestRule = BuildScript.GetAsset<ManifestRule>(Constnat.ManifestRulePath);
             EditorUtility.DisplayProgressBar("Build Manifest", "Read ManifestRule", 1f);
 
-            assetsManifest.downloadURL = string.Empty;
+            assetsManifest.downloadURL = BuildScript.GetServerURL();
             assetsManifest.assets = new AssetData[0];
             assetsManifest.dirs = new string[0];
             assetsManifest.bundles = new string[0];
@@ -99,13 +99,14 @@ namespace Plugins.XAsset.Editor
         private static void SetAssetsWithDir(string path, AssetsManifest assetsManifest)
         {
             List<FileInfo> fileInfos = UtilIO.GetFileInfoByFolder(path, SearchOption.AllDirectories);
-            var assetBundleName = TrimedAssetBundleName(Path.GetDirectoryName(path).Replace("\\", "/")) + "_g";
 
             for (int i = 0; i < fileInfos.Count; i++)
             {
-                path = UtilIO.GetUnityAssetPath(fileInfos[i].FullName);
+                path = UtilIO.GetUnityAssetPath(fileInfos[i].FullName); 
                 if (Directory.Exists(path) || path.EndsWith(".cs", System.StringComparison.CurrentCulture))
                     continue;
+                var assetBundleName = TrimedAssetBundleName(Path.GetDirectoryName(path).Replace("\\", "/")) + "_g";
+                Debug.Log(assetBundleName);
                 BuildScript.SetAssetBundleNameAndVariant(path, assetBundleName.ToLower(), null, assetsManifest);
             }
         }
@@ -113,14 +114,12 @@ namespace Plugins.XAsset.Editor
         private static void SetAssetsWithFile(string path, AssetsManifest assetsManifest)
         {
             List<FileInfo> fileInfos = UtilIO.GetFileInfoByFolder(path, SearchOption.AllDirectories);
-            var assetBundleName = TrimedAssetBundleName(Path.GetDirectoryName(path).Replace("\\", "/"));
 
             for (int i = 0; i < fileInfos.Count; i++)
             {
                 path = UtilIO.GetUnityAssetPath(fileInfos[i].FullName);
                 if (Directory.Exists(path) || path.EndsWith(".cs", System.StringComparison.CurrentCulture))
                     continue;
-
                 var dir = Path.GetDirectoryName(path);
                 var name = Path.GetFileNameWithoutExtension(path);
                 if (dir == null)
@@ -129,6 +128,7 @@ namespace Plugins.XAsset.Editor
                 if (name == null)
                     continue;
 
+                var assetBundleName = TrimedAssetBundleName(Path.Combine(dir, name));
                 BuildScript.SetAssetBundleNameAndVariant(path, assetBundleName.ToLower(), null, assetsManifest);
             }
         }
@@ -136,13 +136,13 @@ namespace Plugins.XAsset.Editor
         private static void SetAssetsWithName(string path, AssetsManifest assetsManifest)
         {
             List<FileInfo> fileInfos = UtilIO.GetFileInfoByFolder(path, SearchOption.AllDirectories);
-            var assetBundleName = Path.GetFileNameWithoutExtension(path);
 
             for (int i = 0; i < fileInfos.Count; i++)
             {
                 path = UtilIO.GetUnityAssetPath(fileInfos[i].FullName);
                 if (Directory.Exists(path) || path.EndsWith(".cs", System.StringComparison.CurrentCulture))
                     continue;
+                var assetBundleName = Path.GetFileNameWithoutExtension(path);
                 BuildScript.SetAssetBundleNameAndVariant(path, assetBundleName.ToLower(), null, assetsManifest);
             }
         }

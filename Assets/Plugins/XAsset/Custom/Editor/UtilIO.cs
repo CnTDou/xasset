@@ -182,9 +182,31 @@ public static class UtilIO
         {
             foreach (var item in dirInfo.GetDirectories())
             {
+                if (item.FullName.EndsWith(".DS_Store") || item.FullName.EndsWith(".meta"))
+                {
+                    continue;
+                }
                 string dir = GetUnityAssetPath(item.FullName);
-                if (match(dir) && !folder.Exists((p)=> { return p == dir; }))
+                if (match(dir) && !folder.Exists((p) => { return p == dir; }))
                     folder.Add(dir);
+            }
+        }
+    }
+
+    public static void GetSubFile(string folderPath, ref List<string> files, Predicate<string> match)
+    {
+        DirectoryInfo dirInfo = new DirectoryInfo(folderPath);
+        if (dirInfo.Exists)
+        {
+            foreach (var item in dirInfo.GetFiles())
+            {
+                if (item.FullName.EndsWith(".DS_Store") || item.FullName.EndsWith(".meta"))
+                {
+                    continue;
+                }
+                string dir = GetUnityAssetPath(item.FullName);
+                if (match(dir) && !files.Exists((p) => { return p == dir; }))
+                    files.Add(dir);
             }
         }
     }

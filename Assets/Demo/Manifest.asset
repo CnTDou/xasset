@@ -11,14 +11,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6951743adb93844fcb5ddf53e02547c9, type: 3}
   m_Name: Manifest
   m_EditorClassIdentifier: 
-  downloadURL: 
+  downloadURL: http://192.168.1.124:7888/
   activeVariants: []
   bundles:
-  - manifest
+  - assets/demo/sprites_g
+  - assets/demo/scenes/init
+  - assets/demo/scenes/main
+  - assets/demo/scenes/test
+  - assets/demo/prefabs_g
   dirs:
-  - Assets/Demo
+  - Assets/Demo/Sprites
+  - Assets/Demo/Scenes
+  - Assets/Demo/Prefabs
   assets:
   - variant: -1
     bundle: 0
     dir: 0
-    name: Manifest.asset
+    name: blackSquare.png
+  - variant: -1
+    bundle: 0
+    dir: 0
+    name: UnityLogo.png
+  - variant: -1
+    bundle: 1
+    dir: 1
+    name: Init.unity
+  - variant: -1
+    bundle: 2
+    dir: 1
+    name: Main.unity
+  - variant: -1
+    bundle: 3
+    dir: 1
+    name: Test.unity
+  - variant: -1
+    bundle: 4
+    dir: 2
+    name: UIRoot.prefab
+  - variant: -1
+    bundle: 4
+    dir: 2
+    name: UIRoot2.prefab
