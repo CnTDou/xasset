@@ -443,7 +443,7 @@ namespace Plugins.XAsset.Editor
             }
         }
 
-        private static T GetAsset<T>(string path) where T : ScriptableObject
+        public static T GetAsset<T>(string path) where T : ScriptableObject
         {
             var asset = AssetDatabase.LoadAssetAtPath<T>(path);
             if (asset == null)
@@ -458,7 +458,7 @@ namespace Plugins.XAsset.Editor
 
         public static Settings GetSettings()
         {
-            const string path = "Assets/Settings.asset";
+            const string path = Constnat.SettingPath;
             return GetAsset<Settings>(path);
         }
 

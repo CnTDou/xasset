@@ -38,7 +38,7 @@ namespace Plugins.XAsset
     public static class Utility
     {
         public const string AssetBundles = "AssetBundles";
-        public const string AssetsManifestAsset = "Assets/Manifest.asset";
+        public const string AssetsManifestAsset = Constnat.AssetRoot + "Manifest.asset";
         public static bool assetBundleMode = true;
         public static LoadDelegate loadDelegate = null;
         public static GetPlatformDelegate getPlatformDelegate = null;
@@ -113,7 +113,7 @@ namespace Plugins.XAsset
                 path = Application.streamingAssetsPath + "/" + filename;
             }
 #if UNITY_IOS || UNITY_EDITOR
-			path = "file://" + path;
+            path = "file://" + path;
 #elif UNITY_STANDALONE_WIN
             path = "file:///" + path;
 #endif

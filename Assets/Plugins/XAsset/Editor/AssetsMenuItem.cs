@@ -30,7 +30,7 @@ using UnityEngine;
 
 namespace Plugins.XAsset.Editor
 {
-    public static class AssetsMenuItem
+    public static partial class AssetsMenuItem
     {
         private const string KMarkAssetsWithDir = "Assets/AssetBundles/按目录标记";
         private const string KMarkAssetsWithFile = "Assets/AssetBundles/按文件标记";
@@ -47,7 +47,7 @@ namespace Plugins.XAsset.Editor
         private static void OnInitialize()
         {
             EditorUtility.ClearProgressBar();
-            var settings = BuildScript.GetSettings(); 
+            var settings = BuildScript.GetSettings();
             if (settings.localServer)
             {
                 bool isRunning = LaunchLocalServer.IsRunning();
@@ -73,7 +73,7 @@ namespace Plugins.XAsset.Editor
 
         public static string TrimedAssetBundleName(string assetBundleName)
         {
-            if(string.IsNullOrEmpty(assetRootPath))
+            if (string.IsNullOrEmpty(assetRootPath))
                 return assetBundleName;
             return assetBundleName.Replace(assetRootPath, "");
         }
@@ -89,7 +89,7 @@ namespace Plugins.XAsset.Editor
         private static void MarkAssetsWithDir()
         {
             var settings = BuildScript.GetSettings();
-            assetRootPath = settings.assetRootPath; 
+            assetRootPath = settings.assetRootPath;
             var assetsManifest = BuildScript.GetManifest();
             var assets = Selection.GetFiltered<Object>(SelectionMode.DeepAssets);
             for (var i = 0; i < assets.Length; i++)
@@ -112,7 +112,7 @@ namespace Plugins.XAsset.Editor
         private static void MarkAssetsWithFile()
         {
             var settings = BuildScript.GetSettings();
-            assetRootPath = settings.assetRootPath; 
+            assetRootPath = settings.assetRootPath;
             var assetsManifest = BuildScript.GetManifest();
             var assets = Selection.GetFiltered<Object>(SelectionMode.DeepAssets);
             for (var i = 0; i < assets.Length; i++)
@@ -144,7 +144,7 @@ namespace Plugins.XAsset.Editor
         private static void MarkAssetsWithName()
         {
             var settings = BuildScript.GetSettings();
-            assetRootPath = settings.assetRootPath; 
+            assetRootPath = settings.assetRootPath;
             var assets = Selection.GetFiltered<Object>(SelectionMode.DeepAssets);
             var assetsManifest = BuildScript.GetManifest();
             for (var i = 0; i < assets.Length; i++)
