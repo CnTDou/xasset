@@ -10,16 +10,36 @@ namespace Plugins.XAsset.Editor
 {
     public static partial class AssetsMenuItem
     {
-        public static void _BuildManifest()
+
+        [MenuItem("Tools/AssetBundles/生成 Package 配置 [根据Rule文件]")]
+        public static void _BuildManifestByRule()
         {
             _BuildManifest(BuildType.Package);
         }
 
-        [MenuItem("Assets/AssetBundles/生成 Network 配置", true, 1000)]
-        public static void _BuildNetworkManifest()
+        [MenuItem("Tools/AssetBundles/生成 Network 配置 [根据Rule文件]")]
+        public static void _BuildNetworkManifestByRule()
         {
             _BuildManifest(BuildType.Network);
         }
+
+
+        [MenuItem(@"Tools/AssetBundles/生成 Package 资源包 并 Copy to StreamingAssets")]
+        public static void BuildPackage()
+        {
+            _BuildManifestByRule();
+            BuildAssetBundles();
+            CopyAssetBundles();
+        }
+
+        [MenuItem("Tools/AssetBundles/生成 Network 资源包 并 上传")]
+        public static void BuildNetwork()
+        {
+            _BuildNetworkManifestByRule();
+            BuildAssetBundles();
+            UploadAssetBundles();
+        }
+
 
         private static void _BuildManifest(BuildType buildType)
         {
@@ -128,57 +148,10 @@ namespace Plugins.XAsset.Editor
         }
 
 
-        [MenuItem("Tools/AssetBundles/重置 Manifest Rule")]
-        private static void RefreshManifest()
-        {
-            var settings = BuildScript.GetSettings();
-            string assetRootPath = settings.assetRootPath;
-            ManifestRule manifestRule = BuildScript.GetAsset<ManifestRule>(Constnat.ManifestRulePath);
-
-            DirectoryInfo dirInfo = new DirectoryInfo(assetRootPath);
-            DirectoryInfo[] dirs = dirInfo.GetDirectories();
-
-            manifestRule.version = Application.version;
-            manifestRule.resourceVersion = 1;
-
-            for (int i = 0; i < dirs.Length; i++)
-            {
-                string path = UtilIO.GetUnityAssetPath(dirs[i].FullName) + "/";
-
-                if (manifestRule.ruleInfos.Exists((p) => { return p.path == path && p.buildType == BuildType.Network; }) ||
-                    manifestRule.ignorePaths.Exists((p) => { return p == path; }))
-                {
-                    continue;
-                }
-
-                if (!manifestRule.ruleInfos.Exists((p) => { return p.path == path; }))
-                {
-                    manifestRule.ruleInfos.Add(new RuleInfo() { path = path, ruleType = RuleType.Dir });
-                }
-            }
-            EditorUtility.SetDirty(manifestRule);
-            AssetDatabase.SaveAssets();
-        }
-
-        [MenuItem(@"Tools/AssetBundles/生成 Package 资源包 并 Copy")]
-        public static void BuildPackageAssetBundle()
-        {
-            _BuildManifest();
-            BuildAssetBundles();
-            CopyAssetBundles();
-        }
-
-        [MenuItem("Tools/AssetBundles/生成 Network 资源包 并 上传")]
-        public static void BuildNetworkAssetBundle()
-        {
-            _BuildNetworkManifest();
-            BuildAssetBundles();
-            UploadAssetBundles();
-        }
-
         private static void UploadAssetBundles()
         {
-
+            // todo: 上传操作
         }
+
     }
 }

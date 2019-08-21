@@ -58,15 +58,13 @@ namespace Plugins.XAsset.Editor
     }
 
     public enum RuleType
-    {
-        None,
+    { 
         Dir,
         File,
         FileName,
     }
     public enum BuildType
-    {
-        None,
+    { 
         Package,
         Network,
     }
