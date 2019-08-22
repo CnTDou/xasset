@@ -98,11 +98,11 @@ namespace Plugins.XAsset.Editor
 
         private static void SetAssetsWithDir(string path, AssetsManifest assetsManifest)
         {
-            List<FileInfo> fileInfos = UtilIO.GetFileInfoByFolder(path, SearchOption.AllDirectories);
+            List<FileInfo> fileInfos = Util.GetFileInfoByFolder(path, SearchOption.AllDirectories);
 
             for (int i = 0; i < fileInfos.Count; i++)
             {
-                path = UtilIO.GetUnityAssetPath(fileInfos[i].FullName); 
+                path = Util.GetUnityAssetPath(fileInfos[i].FullName); 
                 if (Directory.Exists(path) || path.EndsWith(".cs", System.StringComparison.CurrentCulture))
                     continue;
                 var assetBundleName = TrimedAssetBundleName(Path.GetDirectoryName(path).Replace("\\", "/")) + "_g";
@@ -112,11 +112,11 @@ namespace Plugins.XAsset.Editor
 
         private static void SetAssetsWithFile(string path, AssetsManifest assetsManifest)
         {
-            List<FileInfo> fileInfos = UtilIO.GetFileInfoByFolder(path, SearchOption.AllDirectories);
+            List<FileInfo> fileInfos = Util.GetFileInfoByFolder(path, SearchOption.AllDirectories);
 
             for (int i = 0; i < fileInfos.Count; i++)
             {
-                path = UtilIO.GetUnityAssetPath(fileInfos[i].FullName);
+                path = Util.GetUnityAssetPath(fileInfos[i].FullName);
                 if (Directory.Exists(path) || path.EndsWith(".cs", System.StringComparison.CurrentCulture))
                     continue;
                 var dir = Path.GetDirectoryName(path);
@@ -134,11 +134,11 @@ namespace Plugins.XAsset.Editor
 
         private static void SetAssetsWithName(string path, AssetsManifest assetsManifest)
         {
-            List<FileInfo> fileInfos = UtilIO.GetFileInfoByFolder(path, SearchOption.AllDirectories);
+            List<FileInfo> fileInfos = Util.GetFileInfoByFolder(path, SearchOption.AllDirectories);
 
             for (int i = 0; i < fileInfos.Count; i++)
             {
-                path = UtilIO.GetUnityAssetPath(fileInfos[i].FullName);
+                path = Util.GetUnityAssetPath(fileInfos[i].FullName);
                 if (Directory.Exists(path) || path.EndsWith(".cs", System.StringComparison.CurrentCulture))
                     continue;
                 var assetBundleName = Path.GetFileNameWithoutExtension(path);

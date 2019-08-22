@@ -39,7 +39,7 @@ namespace Plugins.XAsset.Editor
             unAddFolderOrFiles.Clear();
             GetSubFolder(fullAssetRoot, ref unAddFolderOrFiles);
 
-            UtilIO.GetSubFile(fullAssetRoot, ref unAddFolderOrFiles, (p) =>
+            Util.GetSubFile(fullAssetRoot, ref unAddFolderOrFiles, (p) =>
             {
                 if (t.ignorePaths.Exists((o) => { return o == p; }))
                 {
@@ -55,7 +55,7 @@ namespace Plugins.XAsset.Editor
 
         private void GetSubFolder(string folder, ref List<string> list)
         {
-            UtilIO.GetSubFolder(folder, ref list, (p) =>
+            Util.GetSubFolder(folder, ref list, (p) =>
             {
                 if (t.ignorePaths.Exists((o) => { return o == p; }))
                 {
@@ -335,7 +335,7 @@ namespace Plugins.XAsset.Editor
             if (dir.Exists)
             {
                 DirectoryInfo[] sub = dir.GetDirectories();
-                if (sub.Length == 0 || (sub.Length == 1 && UtilIO.GetUnityAssetPath(sub[0].FullName) == path))
+                if (sub.Length == 0 || (sub.Length == 1 && Util.GetUnityAssetPath(sub[0].FullName) == path))
                 {
                     return;
                 }

@@ -38,14 +38,14 @@ namespace Plugins.XAsset
 	{
 		private static readonly int MAX_LOAD_SIZE_PERFREME = 3;
 		// ReSharper disable once InconsistentNaming
-		private static readonly List<Bundle> _bundles = new List<Bundle> ();
+		public static readonly List<Bundle> _bundles = new List<Bundle> ();
 
-		// ReSharper disable once InconsistentNaming
-		private static readonly List<Bundle> _unusedBundles = new List<Bundle> ();
+        // ReSharper disable once InconsistentNaming
+        public static readonly List<Bundle> _unusedBundles = new List<Bundle> ();
 
-		private static readonly List<Bundle> _ready2Load = new List<Bundle> ();
+        public static readonly List<Bundle> _ready2Load = new List<Bundle> ();
 
-		private static readonly List<Bundle> _loading = new List<Bundle> ();
+        public static readonly List<Bundle> _loading = new List<Bundle> ();
 
 		public static string[] activeVariants { get; set; }
 

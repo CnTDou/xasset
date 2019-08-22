@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System;
+using Object = UnityEngine.Object;
 
 namespace Plugins.XAsset.Editor
 {
-    using Editor = UnityEditor.Editor;
     [CustomEditor(typeof(ResMgr))]
-    public class ResMgrInspector : Editor
+    public class ResMgrInspector : UnityEditor.Editor
     {
         private readonly HashSet<string> m_OpenedItems = new HashSet<string>();
 
@@ -24,29 +25,36 @@ namespace Plugins.XAsset.Editor
 
             EditorGUILayout.BeginVertical();
             {
-                DrawBundleAssets();
+                DrawDictionary("Assets.bundleAssets ", Assets.bundleAssets);
+                DrawList("Assets._assets ", Assets._assets);
+                DrawList("Assets._unusedAssets ", Assets._unusedAssets);
+                DrawDictionary("Versions.data ", Versions.data);
 
+                DrawList("Bundles._bundles  ", Bundles._bundles);
+                DrawList("Bundles._loading  ", Bundles._loading);
+                DrawList("Bundles._ready2Load  ", Bundles._ready2Load);
+                DrawList("Bundles._unusedBundles  ", Bundles._unusedBundles);
             }
             EditorGUILayout.EndVertical();
 
             serializedObject.ApplyModifiedProperties();
         }
 
-        private void DrawBundleAssets()
+        private void DrawDictionary<TKey, TValue>(string fullName, Dictionary<TKey, TValue> dic)
         {
             EditorGUILayout.BeginVertical("box");
             {
                 EditorGUI.indentLevel++;
 
-                EditorGUILayout.LabelField("Bundle Assets  Count:" + Assets.bundleAssets.Count);
-                bool currentState = GetState("Bundle Assets Collections");
+                EditorGUILayout.LabelField(fullName + " Count:" + dic.Count);
+                bool currentState = GetState(fullName + " Collections");
                 if (currentState)
                 {
-                    if (Assets.bundleAssets.Count > 0)
+                    if (dic.Count > 0)
                     {
-                        foreach (var item in Assets.bundleAssets)
+                        foreach (var item in dic)
                         {
-                            EditorGUILayout.LabelField("    Asset Path : " + item.Key);
+                            EditorGUILayout.LabelField(item.Key + " : " + item.Value);
                         }
                     }
                     else
@@ -57,6 +65,55 @@ namespace Plugins.XAsset.Editor
                 EditorGUI.indentLevel--;
             }
             EditorGUILayout.EndVertical();
+        }
+
+        private void DrawList<TValue>(string fullName, List<TValue> list)
+        {
+            EditorGUILayout.BeginVertical("box");
+            {
+                EditorGUI.indentLevel++;
+
+                EditorGUILayout.LabelField(fullName + " Count:" + list.Count);
+                bool currentState = GetState(fullName + " Collections");
+                if (currentState)
+                {
+                    if (list.Count > 0)
+                    {
+                        EditorGUI.indentLevel++;
+
+                        foreach (var item in list)
+                        {
+                            currentState = DrawItem(item);
+                        }
+
+                        EditorGUI.indentLevel--;
+
+                    }
+                    else
+                    {
+                        EditorGUILayout.LabelField("Collections is Empty ...");
+                    }
+                }
+                EditorGUI.indentLevel--;
+            }
+            EditorGUILayout.EndVertical();
+        }
+
+        private bool DrawItem<TValue>(TValue item )
+        {
+            bool currentState = GetState("Item:" + item);
+            if (currentState)
+            {
+                EditorGUI.indentLevel++;
+                foreach (var _item in Util.GetFieIds(item))
+                {
+                    EditorGUILayout.LabelField(_item.Key + " : " + _item.Value); 
+                }
+                EditorGUILayout.Space();
+                EditorGUI.indentLevel--;
+            }
+
+            return currentState;
         }
 
         private bool GetState(string fullName, int indexLevel = -1)

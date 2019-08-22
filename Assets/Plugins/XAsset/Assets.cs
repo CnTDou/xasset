@@ -39,10 +39,10 @@ namespace Plugins.XAsset
         private static Dictionary<string, int> _bundleAssets = new Dictionary<string, int>();
 
         // ReSharper disable once InconsistentNaming
-        private static readonly List<Asset> _assets = new List<Asset>();
+        public static readonly List<Asset> _assets = new List<Asset>();
 
         // ReSharper disable once InconsistentNaming
-        private static readonly List<Asset> _unusedAssets = new List<Asset>();
+        public static readonly List<Asset> _unusedAssets = new List<Asset>();
 
         public static Dictionary<string, int> bundleAssets
         {
