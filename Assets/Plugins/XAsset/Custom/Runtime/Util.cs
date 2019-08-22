@@ -15,9 +15,24 @@ namespace Plugins.XAsset.Editor
 
         #region ... Field
 
-        public static T GetStaticField<T>(object instance, string fieldName)
+        public static T GetStaticField<T>(string typeName, string fieldName)
         {
-            return GetField<T>(instance, fieldName, BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            try
+            {
+                Type t = Type.GetType(typeName);
+                if (t != null)
+                {
+                    var field = t.GetField(fieldName, BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+                    if (field != null)
+                        return (T)field.GetValue(t); 
+                }
+                return default(T);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarningFormat("{0} get static field '{1}' fail , error {2} ", typeName, fieldName, e.Message);
+                return default(T);
+            }
         }
 
         public static T GetPublicField<T>(object instance, string fieldName)
@@ -29,6 +44,18 @@ namespace Plugins.XAsset.Editor
         {
             return GetField<T>(instance, fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
         }
+
+
+        public static Dictionary<string, object> GetPublicFields(object instance)
+        {
+            return GetFieIds(instance, BindingFlags.Instance | BindingFlags.Public);
+        }
+
+        public static Dictionary<string, object> GetPrivateFields(object instance)
+        {
+            return GetFieIds(instance, BindingFlags.Instance | BindingFlags.NonPublic);
+        }
+
 
         public static T GetField<T>(object instance, string fieldName, BindingFlags flag = BindingFlags.Default)
         {
@@ -47,28 +74,13 @@ namespace Plugins.XAsset.Editor
             }
         }
 
-        public static Dictionary<string, object> GetStaticFields(object instance)
-        {
-            return GetFieIds(instance, BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-        }
-
-        public static Dictionary<string, object> GetPublicFields(object instance)
-        {
-            return GetFieIds(instance, BindingFlags.Instance | BindingFlags.Public);
-        }
-
-        public static Dictionary<string, object> GetPrivateFields(object instance)
-        {
-            return GetFieIds(instance, BindingFlags.Instance | BindingFlags.NonPublic);
-        }
-
         public static Dictionary<string, object> GetFieIds(object instance, BindingFlags flag = BindingFlags.Default)
         {
             try
             {
                 Dictionary<string, object> dic = new Dictionary<string, object>();
                 Type type = instance.GetType();
-                FieldInfo[] fields = flag == BindingFlags.Default ? type.GetFields(): type.GetFields(flag);
+                FieldInfo[] fields = flag == BindingFlags.Default ? type.GetFields() : type.GetFields(flag);
                 if (fields != null && fields.Length > 0)
                 {
                     foreach (var item in fields)
@@ -84,7 +96,7 @@ namespace Plugins.XAsset.Editor
                 return null;
             }
         }
-         
+
         #endregion
 
         #region ... IO.File

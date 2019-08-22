@@ -62,7 +62,7 @@ public class ResMgr : MonoBehaviour
         UpdateError,
         Completed,
     }
-
+    public bool isWindow = false;
     [SerializeField]
     private State state = State.Wait;
     public UpdateControl updateControl = new UpdateControl();
@@ -372,4 +372,128 @@ public class ResMgr : MonoBehaviour
         Debug.LogFormat(format, args);
     }
 
+    string message, assetPath;
+
+    private void OnGUI()
+    {
+        if (isWindow)
+        {
+            using (var v = new GUILayout.VerticalScope("RES", "window"))
+            {
+                switch (state)
+                {
+                    case State.Wait:
+                        if (GUILayout.Button("Init"))
+                        {
+                            Init(()=> { message = " ready ."; }, (err) => { message = err; });
+                        }
+                        if (GUILayout.Button("Check"))
+                        {
+                            CheckVersion((vinfo) =>
+                            {
+                                if (vinfo.IsUpdate)
+                                {
+                                    StartUpdateRes(null, (err) => { message = err; }, (uinfo) =>
+                                    {
+                                        message = "更新中 : \r\n";
+                                        message += string.Format("Count: {0}/{1} -\r\n", uinfo.TotalUpdateSuccessCount, uinfo.TotalUpdateCount);
+                                        message += string.Format("Length: {0}/{1} -\r\n", uinfo.TotalUpdateSuccessLength, uinfo.TotalUpdateLength);
+                                        message += string.Format("Speed: {0} -\r\n", uinfo.NetworkSpeed);
+                                        message += string.Format("Current Length: {0}/{1} -\r\n", uinfo.CurrentSuccessLength, uinfo.CurrentTotalLength);
+                                        message += string.Format("Current Progress: {0} ", uinfo.CurrentProgress);
+                                    });
+                                }
+                            }, (err) => { message = err; });
+                        }
+                        break;
+                    case State.Completed:
+                        if (GUILayout.Button("Clear"))
+                        {
+                            Clear();
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
+                GUILayout.Label(string.Format("{0}:{1}", state, message));
+                if (state == State.Completed)
+                {
+                    GUILayout.Label("AllBundleAssets:");
+                    foreach (var item in Assets.bundleAssets)
+                    {
+                        if (GUILayout.Button(item.Key))
+                        {
+                            assetPath = item.Key;
+                        }
+                    }
+
+                    using (var h = new GUILayout.HorizontalScope())
+                    {
+                        assetPath = GUILayout.TextField(assetPath, GUILayout.Width(256));
+                        if (GUILayout.Button("Load"))
+                        {
+                            var asset = Assets.Load(assetPath, typeof(UnityEngine.Object));
+                            asset.completed += OnAssetLoaded;
+                        }
+
+                        if (GUILayout.Button("LoadAsync"))
+                        {
+                            var asset = Assets.LoadAsync(assetPath, typeof(UnityEngine.Object));
+                            asset.completed += OnAssetLoaded;
+                        }
+
+                        if (GUILayout.Button("LoadScene"))
+                        {
+                            var asset = Assets.LoadScene(assetPath, true, true);
+                            asset.completed += OnAssetLoaded;
+                        }
+                    }
+
+                    if (loadedAssets.Count > 0)
+                    {
+                        if (GUILayout.Button("UnloadAll"))
+                        {
+                            for (int i = 0; i < loadedAssets.Count; i++)
+                            {
+                                var item = loadedAssets[i];
+                                item.Release();
+                            }
+
+                            loadedAssets.Clear();
+                        }
+
+                        for (int i = 0; i < loadedAssets.Count; i++)
+                        {
+                            var item = loadedAssets[i];
+                            using (var h = new GUILayout.HorizontalScope())
+                            {
+                                GUILayout.Label(item.name);
+                                if (GUILayout.Button("Unload"))
+                                {
+                                    item.Release();
+                                    loadedAssets.RemoveAt(i);
+                                    i--;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    List<Asset> loadedAssets = new List<Asset>();
+
+    void OnAssetLoaded(Asset asset)
+    {
+        if (asset.name.EndsWith(".prefab", StringComparison.CurrentCulture))
+        {
+            var go = Instantiate(asset.asset);
+            go.name = asset.asset.name;
+            asset.Require(go);
+            Destroy(go, 3);
+        }
+        loadedAssets.Add(asset);
+    }
 }

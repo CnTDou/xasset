@@ -50,18 +50,26 @@ namespace Plugins.XAsset.Editor
                 EditorGUILayout.Space();
 
                 DrawDictionary("Update.Version ", t.updateControl._versions);
+
                 DrawDictionary("Update.ServerVersion ", t.updateControl._serverVersions);
 
+                DrawDictionary("Versions.data ", Versions.data); 
+
                 DrawDictionary("Assets.bundleAssets ", Assets.bundleAssets);
-                DrawList("Assets._assets ", Assets._assets);
-                DrawList("Assets._unusedAssets ", Assets._unusedAssets);
 
-                DrawDictionary("Versions.data ", Versions.data);
 
-                DrawList("Bundles._bundles  ", Bundles._bundles);
-                DrawList("Bundles._loading  ", Bundles._loading);
-                DrawList("Bundles._ready2Load  ", Bundles._ready2Load);
-                DrawList("Bundles._unusedBundles  ", Bundles._unusedBundles);
+                DrawList<List<Asset>, Asset>("Assets._assets ", typeof(Assets).ToString(), "_assets");
+
+                DrawList<List<Asset>, Asset>("Assets._unusedAssets ", typeof(Assets).ToString(), "_unusedAssets"); 
+
+                DrawList<List<Bundle>, Bundle>("Bundles._bundles  ", typeof(Bundles).ToString(), "_bundles");
+
+                DrawList<List<Bundle>, Bundle>("Bundles._loading  ", typeof(Bundles).ToString(), "_loading");
+
+                DrawList<List<Bundle>, Bundle>("Bundles._ready2Load  ", typeof(Bundles).ToString(), "_ready2Load");
+
+                DrawList<List<Bundle>, Bundle>("Bundles._unusedBundles  ", typeof(Bundles).ToString(), "_unusedBundles");
+
             }
             EditorGUILayout.EndVertical();
 
@@ -92,38 +100,58 @@ namespace Plugins.XAsset.Editor
                 EditorGUI.indentLevel--;
             }
             EditorGUILayout.EndVertical();
+            EditorGUILayout.Space();
         }
 
-        private void DrawList<TValue>(string fullName, List<TValue> list)
+
+        private void DrawList<T, TValue>(string fullName, string type, string fieidName) where T : IList<TValue>
+        {
+            bool currentState = GetState(" " + fullName + " Collections [注:请在不使用时关闭,展开时会有一定性能损耗.]");
+            if (currentState)
+            {
+                var list = Util.GetStaticField<T>(type, fieidName); 
+                DrawList<T, TValue>(fullName, list); 
+            }
+        }
+
+        private void DrawList<T, TValue>(string fullName, T list) where T : IList<TValue>
         {
             EditorGUILayout.BeginVertical("box");
             {
-                EditorGUI.indentLevel++;
-
-                EditorGUILayout.LabelField(fullName + " Count:" + list.Count);
-                bool currentState = GetState(fullName + " Collections");
-                if (currentState)
+                if (list == null)
                 {
-                    if (list.Count > 0)
-                    {
-                        EditorGUI.indentLevel++;
-
-                        foreach (var item in list)
-                        {
-                            currentState = DrawItem(item);
-                        }
-
-                        EditorGUI.indentLevel--;
-
-                    }
-                    else
-                    {
-                        EditorGUILayout.LabelField("Collections is Empty ...");
-                    }
+                    EditorGUILayout.LabelField(fullName + " Null.");
                 }
-                EditorGUI.indentLevel--;
+                else
+                {
+                    EditorGUI.indentLevel++;
+
+                    EditorGUILayout.LabelField(fullName + " Count:" + list.Count);
+                    bool currentState = GetState(fullName + " Collections");
+                    if (currentState)
+                    {
+                        if (list.Count > 0)
+                        {
+                            EditorGUI.indentLevel++;
+
+                            foreach (var item in list)
+                            {
+                                currentState = DrawItem(item);
+                            }
+
+                            EditorGUI.indentLevel--;
+
+                        }
+                        else
+                        {
+                            EditorGUILayout.LabelField("Collections is Empty ...");
+                        }
+                    }
+                    EditorGUI.indentLevel--;
+                }
             }
             EditorGUILayout.EndVertical();
+            EditorGUILayout.Space();
         }
 
         private bool DrawItem<TValue>(TValue item)
