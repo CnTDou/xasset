@@ -14,24 +14,26 @@ MonoBehaviour:
   downloadURL: http://192.168.1.124:7888/
   activeVariants: []
   bundles:
-  - assets/demo/sprites_g
+  - assets/demo/prefabs_g
   - assets/demo/scenes/init
   - assets/demo/scenes/main
   - assets/demo/scenes/test
-  - assets/demo/prefabs_g
+  - assets/demo/sprites_g
+  - manifest
   dirs:
-  - Assets/Demo/Sprites
-  - Assets/Demo/Scenes
   - Assets/Demo/Prefabs
+  - Assets/Demo/Scenes
+  - Assets/Demo/Sprites
+  - Assets/Demo
   assets:
   - variant: -1
     bundle: 0
     dir: 0
-    name: blackSquare.png
+    name: UIRoot.prefab
   - variant: -1
     bundle: 0
     dir: 0
-    name: UnityLogo.png
+    name: UIRoot2.prefab
   - variant: -1
     bundle: 1
     dir: 1
@@ -47,8 +49,12 @@ MonoBehaviour:
   - variant: -1
     bundle: 4
     dir: 2
-    name: UIRoot.prefab
+    name: blackSquare.png
   - variant: -1
     bundle: 4
     dir: 2
-    name: UIRoot2.prefab
+    name: UnityLogo.png
+  - variant: -1
+    bundle: 5
+    dir: 3
+    name: Manifest.asset

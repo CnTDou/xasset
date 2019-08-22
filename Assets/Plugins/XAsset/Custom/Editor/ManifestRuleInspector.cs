@@ -13,7 +13,6 @@ namespace Plugins.XAsset.Editor
     [CustomEditor(typeof(ManifestRule))]
     public class ManifestRuleInspector : Editor
     {
-        private SerializedObject _target;
         private string _path;
 
         private readonly HashSet<string> m_OpenedItems = new HashSet<string>();
@@ -27,9 +26,11 @@ namespace Plugins.XAsset.Editor
         List<string> unAddFolderOrFiles = new List<string>();
         ManifestRule t;
 
+        bool isChanged = false;
+
         void OnEnable()
         {
-            _target = new SerializedObject(target);
+            t = (ManifestRule)target;
             fullAssetRoot = AssetRoot.Replace("Assets", Application.dataPath);
         }
 
@@ -65,39 +66,43 @@ namespace Plugins.XAsset.Editor
                     return false;
                 }
                 return true;
-            }); 
+            });
         }
 
         public override void OnInspectorGUI()
         {
-            t = (ManifestRule)target;
-
             //base.OnInspectorGUI();
-            _target.Update();
+            serializedObject.Update();
 
             EditorGUILayout.BeginVertical();
             {
-                //manifestRule.ignorePaths.Sort();
-                //manifestRule.ruleInfos.Sort();
+                if (string.IsNullOrEmpty(t.version))
+                    t.version = Application.version;
 
-                EditorGUILayout.LabelField("Current Variant", t.version ?? "<Unknwon>");
-                EditorGUILayout.LabelField("Resource Version", t.resourceVersion.ToString());
+                t.version = EditorGUILayout.TextField("Current Variant", t.version);
+                t.resourceVersion = EditorGUILayout.IntField("Resource Version", t.resourceVersion);
 
                 if (Selection.activeObject)
                 {
                     string selectionPath = AssetDatabase.GetAssetPath(Selection.activeObject);
                     EditorGUILayout.LabelField("Selection Object Path", selectionPath);
                 }
+                if (isChanged)
+                {
+                    GUILayout.Box("请按Ctrl+S or Commod+s 保存.");
+                }
                 DrawAllFolder("Un Add Folder");
                 DrawIgnoreList("Ignore Paths");
                 DrawRuleInfo("Rule Infos");
             }
             EditorGUILayout.EndVertical();
-
-            _target.ApplyModifiedProperties();
-
-            Repaint();
-
+            serializedObject.ApplyModifiedProperties();
+            if (GUI.changed || isChanged)
+            {
+                isChanged = false;
+                EditorUtility.SetDirty(target);
+                AssetDatabase.SaveAssets();
+            }
         }
 
         private void DrawAllFolder(string fullName)
@@ -126,12 +131,14 @@ namespace Plugins.XAsset.Editor
                             {
                                 if (GUILayout.Button("Add Rule"))
                                 {
+                                    isChanged = true;
                                     t.AddRule(item);
                                     RefreshUnAdd();
                                     break;
                                 }
                                 if (GUILayout.Button("Add Ignore"))
                                 {
+                                    isChanged = true;
                                     t.AddIgnore(item);
                                     RefreshUnAdd();
                                     break;
@@ -168,6 +175,7 @@ namespace Plugins.XAsset.Editor
                     {
                         if (GUILayout.Button("Add Ignore Path"))
                         {
+                            isChanged = true;
                             if (!t.ignorePaths.Exists((p) => { return p == addIgnorePath; }))
                             {
                                 t.ignorePaths.Add(addIgnorePath);
@@ -187,6 +195,7 @@ namespace Plugins.XAsset.Editor
                     EditorGUILayout.LabelField("Count", t.ignorePaths.Count.ToString());
                     if (GUILayout.Button("Clean All"))
                     {
+                        isChanged = true;
                         t.ignorePaths.Clear();
                     }
                     if (t.ignorePaths.Count > 0)
@@ -199,11 +208,13 @@ namespace Plugins.XAsset.Editor
                             {
                                 if (GUILayout.Button("Remove"))
                                 {
+                                    isChanged = true;
                                     t.ignorePaths.Remove(value);
                                     break;
                                 }
                                 if (GUILayout.Button("Add Rule"))
                                 {
+                                    isChanged = true;
                                     t.AddRule(value);
                                     break;
                                 }
@@ -243,6 +254,7 @@ namespace Plugins.XAsset.Editor
                     {
                         if (GUILayout.Button("Add Rule Path"))
                         {
+                            isChanged = true;
                             if (!t.ruleInfos.Exists((p) => { return p.path == addRulePath; }))
                             {
                                 t.ruleInfos.Add(new RuleInfo() { path = addRulePath });
@@ -262,6 +274,7 @@ namespace Plugins.XAsset.Editor
                     EditorGUILayout.LabelField("Count", t.ruleInfos.Count.ToString());
                     if (GUILayout.Button("Clean All"))
                     {
+                        isChanged = true;
                         t.ruleInfos.Clear();
                     }
                     if (t.ruleInfos.Count > 0)
@@ -291,6 +304,7 @@ namespace Plugins.XAsset.Editor
 
                                     if (GUILayout.Button("Remove"))
                                     {
+                                        isChanged = true;
                                         t.RemoveRule(value.path);
                                         break;
                                     }
@@ -336,6 +350,7 @@ namespace Plugins.XAsset.Editor
                         {
                             if (GUILayout.Button("删除所有子目录"))
                             {
+                                isChanged = true;
                                 t.ruleInfos.RemoveAll((p) => { return p.path.Contains(path) && p.path != path; });
                             }
 
@@ -345,6 +360,7 @@ namespace Plugins.XAsset.Editor
                             {
                                 if (GUILayout.Button("拆分子目录并添加"))
                                 {
+                                    isChanged = true;
                                     if (list.Count > 0)
                                     {
                                         list.ForEach((_path) =>
@@ -356,8 +372,8 @@ namespace Plugins.XAsset.Editor
 
                                 list.ForEach((_path) =>
                                 {
-                                    EditorGUILayout.LabelField(_path); 
-                                }); 
+                                    EditorGUILayout.LabelField(_path);
+                                });
                             }
                         }
                     }

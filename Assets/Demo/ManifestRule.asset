@@ -11,7 +11,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bbe79091749a4724aac176999f510fc1, type: 3}
   m_Name: ManifestRule
   m_EditorClassIdentifier: 
-  version: 
+  version: 1.0
   resourceVersion: 0
-  ignorePaths: []
-  ruleInfos: []
+  ignorePaths:
+  - Assets/Demo/ManifestRule.asset
+  - Assets/Demo/Settings.asset
+  ruleInfos:
+  - path: Assets/Demo/Scripts
+    ruleType: 0
+    buildType: 0
+  - path: Assets/Demo/Sprites
+    ruleType: 0
+    buildType: 0
+  - path: Assets/Demo/Manifest.asset
+    ruleType: 1
+    buildType: 0
+  - path: Assets/Demo/Prefabs
+    ruleType: 0
+    buildType: 0
+  - path: Assets/Demo/Scenes
+    ruleType: 0
+    buildType: 0
