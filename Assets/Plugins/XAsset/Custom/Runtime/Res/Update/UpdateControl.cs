@@ -1,0 +1,192 @@
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+
+namespace Plugins.XAsset
+{
+    public class UpdateControl
+    {
+        private const string VERSION_NAME = "versions.txt"; // 版本名称
+
+        private Dictionary<string, string> _versions = new Dictionary<string, string>();
+        private Dictionary<string, string> _serverVersions = new Dictionary<string, string>();
+        private Download _download = null;                                  // 当前正在下载的
+        private List<Download> _downloadCompletes = null;       //下载完成
+        private Queue<Download> _waltDownloadQueue = null;  // 等待下载的
+
+        private bool _isDownload = false;
+        private Action _onUpdateSucceed;
+        private Action<string> _onUpdateFailed;
+        private Action<UpdatingInfo> _onProgress;
+        private UpdatingInfo _updatingInfo = new UpdatingInfo();
+        private long _updateSuccessLength = 0;
+
+        public UpdateControl()
+        {
+            _waltDownloadQueue = new Queue<Download>();
+        }
+
+
+        /// <summary>
+        /// 检查版本
+        /// </summary>
+        /// <param name="onSucceed">检查完成 不需要更新 </param>
+        /// <param name="onFailed">检查失败</param> 
+        /// <param name="onWaitUpdate">等待更新</param>
+        public void CheckVersion(Action<VersionInfo> onSucceed, Action<string> onFailed)
+        {
+            var path = Utility.GetRelativePath4Update(VERSION_NAME);
+            if (!File.Exists(path))
+            {
+                var asset = Assets.LoadAsync(Utility.GetWebUrlFromDataPath(VERSION_NAME), typeof(TextAsset));
+                asset.completed += delegate
+                {
+                    if (asset.error != null)
+                    {
+                        onFailed(asset.error);
+                        return;
+                    }
+
+                    var dir = Path.GetDirectoryName(path);
+                    if (!Directory.Exists(dir))
+                        Directory.CreateDirectory(dir);
+                    File.WriteAllText(path, asset.text);
+                    LoadVersions(asset.text, onSucceed, onFailed);
+                    asset.Release();
+                };
+            }
+            else
+            {
+                LoadVersions(File.ReadAllText(path), onSucceed, onFailed);
+            }
+        }
+
+        public void Update()
+        {
+            if (_isDownload)
+            {
+                if (_download == null && _waltDownloadQueue.Count > 0)
+                {
+                    var download = _waltDownloadQueue.Dequeue();
+                    download.Start();
+                    _download = download;
+                }
+
+                if (_download != null)
+                {
+                    _download.Update();
+
+                    if (string.IsNullOrEmpty(_download.error))
+                    {
+                        if (_onUpdateFailed != null)
+                        {
+                            _onUpdateFailed.Invoke(_download.error);
+                            _onUpdateFailed = null;
+                        }
+                        _isDownload = false;
+                        return;
+                    }
+                    _updatingInfo.Fill(_download.len, _download.maxlen, _download.progress);
+
+                    if (_download.isDone)
+                    {
+                        _updateSuccessLength += _download.len;
+                        _downloadCompletes.Add(_download);
+                        _download = null;
+                    }
+                }
+
+                _updatingInfo.Fill(_updateSuccessLength, _downloadCompletes.Count);
+
+                if (_waltDownloadQueue.Count == 0 && _download == null)
+                {
+                    if (_onUpdateSucceed != null)
+                    {
+                        _onUpdateSucceed.Invoke();
+                        _onUpdateSucceed = null;
+                    }
+                    _onUpdateFailed = null;
+                    _onProgress = null;
+                    _isDownload = false;
+                }
+            }
+        }
+
+        public void StartUpdateRes(Action onSucceed, Action<string> onFailed, Action<UpdatingInfo> onProgress)
+        {
+            _onUpdateSucceed = onSucceed;
+            _onUpdateFailed = onFailed;
+            _onProgress = onProgress;
+            _isDownload = true;
+        }
+
+        private void LoadVersions(string text, Action<VersionInfo> onSucceed, Action<string> onFailed)
+        {
+            LoadText2Map(text, ref _versions);
+            var asset = Assets.LoadAsync(Utility.GetDownloadURL(VERSION_NAME), typeof(TextAsset));
+            asset.completed += delegate
+            {
+                if (asset.error != null)
+                {
+                    onFailed(asset.error);
+                    return;
+                }
+
+                LoadText2Map(asset.text, ref _serverVersions);
+                foreach (var item in _serverVersions)
+                {
+                    string ver;
+                    if (!_versions.TryGetValue(item.Key, out ver) || !ver.Equals(item.Value))
+                    {
+                        var downloader = new Download();
+                        downloader.url = Utility.GetDownloadURL(item.Key);
+                        downloader.path = item.Key;
+                        downloader.version = item.Value;
+                        downloader.savePath = Utility.GetRelativePath4Update(item.Key);
+                        _waltDownloadQueue.Enqueue(downloader);
+                    }
+                }
+                Debug.Log(_waltDownloadQueue.Count);
+                if (_waltDownloadQueue.Count == 0)
+                {
+                    onSucceed(new VersionInfo());
+                }
+                else
+                {
+                    var downloader = new Download();
+                    downloader.url = Utility.GetDownloadURL(Utility.GetPlatform());
+                    downloader.path = Utility.GetPlatform();
+                    downloader.savePath = Utility.GetRelativePath4Update(Utility.GetPlatform());
+                    _waltDownloadQueue.Enqueue(downloader);
+
+                    VersionInfo versionInfo = new VersionInfo()
+                    {
+                        updateCount = _waltDownloadQueue.Count,
+                    };
+                    _updatingInfo.Fill(versionInfo);
+                    onSucceed(versionInfo);
+                }
+            };
+        }
+
+        private void LoadText2Map(string text, ref Dictionary<string, string> map)
+        {
+            map.Clear();
+            using (var reader = new StringReader(text))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    var fields = line.Split(':');
+                    if (fields.Length > 1)
+                    {
+                        map.Add(fields[0], fields[1]);
+                    }
+                }
+            }
+        }
+
+    }
+}
