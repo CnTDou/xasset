@@ -65,10 +65,7 @@ public class ResMgr : MonoBehaviour
 
     [SerializeField]
     private State state = State.Wait;
-    private UpdateControl updateControl = new UpdateControl();
-
-    public int maxLoadCount = 3;  // 为性能考虑,约束同时最大加载数量 0为不约束
-
+    public UpdateControl updateControl = new UpdateControl();
     private void Update()
     {
         switch (state)
@@ -102,6 +99,7 @@ public class ResMgr : MonoBehaviour
             ResMgr.OutLog("res error RES.Init, state {0}", state);
             return;
         }
+        Versions.Load();
         state = State.Initing;
         Assets.Initialize(() =>
         {
@@ -113,6 +111,7 @@ public class ResMgr : MonoBehaviour
         }, (err) =>
         {
             state = State.InitializeError;
+            ResMgr.OutLog("res error RES.Init, error {0}", state);
             if (onFailed != null)
             {
                 onFailed.Invoke(err);
@@ -137,6 +136,7 @@ public class ResMgr : MonoBehaviour
                 return;
         }
         state = State.Checking;
+        Versions.Load();
         updateControl.CheckVersion((versionInfo) =>
         {
             state = versionInfo.IsUpdate ? State.WaitUpdate : State.Completed;
@@ -147,6 +147,7 @@ public class ResMgr : MonoBehaviour
         }, (err) =>
         {
             state = State.CheckError;
+            ResMgr.OutLog("res error RES.CheckVersion, error: {0}", state);
             if (onFailed != null)
             {
                 onFailed.Invoke(err);
@@ -168,9 +169,28 @@ public class ResMgr : MonoBehaviour
             return;
         }
         state = State.Updateing;
-        onSucceed += delegate { state = State.Completed; };
-        onFailed += delegate { state = State.UpdateError; };
-        updateControl.StartUpdateRes(onSucceed, onFailed, onProgress);
+        updateControl.StartUpdateRes(() =>
+        {
+            state = State.Completed;
+            if (onSucceed != null)
+            {
+                onSucceed.Invoke();
+            }
+        }, (err) =>
+        {
+            state = State.UpdateError;
+            ResMgr.OutLog("res error RES.UpdateRes, error {0}", state);
+            if (onFailed != null)
+            {
+                onFailed.Invoke(err);
+            }
+        }, onProgress);
+    }
+
+    public void Clear()
+    {
+        state = State.Wait;
+        updateControl.Clear();
     }
 
     #region ... Asset
@@ -353,4 +373,3 @@ public class ResMgr : MonoBehaviour
     }
 
 }
-  

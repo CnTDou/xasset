@@ -21,13 +21,41 @@ namespace Plugins.XAsset.Editor
         {
             base.OnInspectorGUI();
             var t = (ResMgr)target;
-            serializedObject.Update();
+
+            if (!Application.isPlaying)
+                return;
 
             EditorGUILayout.BeginVertical();
             {
+                EditorGUILayout.BeginHorizontal();
+                {
+                    if (GUILayout.Button("init", EditorStyles.toolbarButton, GUILayout.MaxWidth(100)))
+                    {
+                        t.Init(null, null);
+                    }
+                    if (GUILayout.Button("check", EditorStyles.toolbarButton, GUILayout.MaxWidth(100)))
+                    {
+                        ResMgr.Instance.CheckVersion((v) =>
+                        {
+                            ResMgr.Instance.StartUpdateRes(null, null, null);
+                        }, null);
+                    }
+                    if (GUILayout.Button("clear", EditorStyles.toolbarButton, GUILayout.MaxWidth(100)))
+                    {
+                        if (EditorUtility.DisplayDialog("Clear", "Do you really want to  clear the all?", "OK", "Cancel"))
+                            t.Clear();
+                    }
+                }
+                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.Space();
+
+                DrawDictionary("Update.Version ", t.updateControl._versions);
+                DrawDictionary("Update.ServerVersion ", t.updateControl._serverVersions);
+
                 DrawDictionary("Assets.bundleAssets ", Assets.bundleAssets);
                 DrawList("Assets._assets ", Assets._assets);
                 DrawList("Assets._unusedAssets ", Assets._unusedAssets);
+
                 DrawDictionary("Versions.data ", Versions.data);
 
                 DrawList("Bundles._bundles  ", Bundles._bundles);
@@ -37,7 +65,6 @@ namespace Plugins.XAsset.Editor
             }
             EditorGUILayout.EndVertical();
 
-            serializedObject.ApplyModifiedProperties();
         }
 
         private void DrawDictionary<TKey, TValue>(string fullName, Dictionary<TKey, TValue> dic)
@@ -99,7 +126,7 @@ namespace Plugins.XAsset.Editor
             EditorGUILayout.EndVertical();
         }
 
-        private bool DrawItem<TValue>(TValue item )
+        private bool DrawItem<TValue>(TValue item)
         {
             bool currentState = GetState("Item:" + item);
             if (currentState)
@@ -107,7 +134,7 @@ namespace Plugins.XAsset.Editor
                 EditorGUI.indentLevel++;
                 foreach (var _item in Util.GetFieIds(item))
                 {
-                    EditorGUILayout.LabelField(_item.Key + " : " + _item.Value); 
+                    EditorGUILayout.LabelField(_item.Key + " : " + _item.Value);
                 }
                 EditorGUILayout.Space();
                 EditorGUI.indentLevel--;

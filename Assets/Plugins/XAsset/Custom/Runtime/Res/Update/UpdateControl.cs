@@ -11,25 +11,23 @@ namespace Plugins.XAsset
     {
         private const string VERSION_NAME = "versions.txt"; // 版本名称
 
-        private Dictionary<string, string> _versions = new Dictionary<string, string>();
-        private Dictionary<string, string> _serverVersions = new Dictionary<string, string>();
+        public Dictionary<string, string> _versions = new Dictionary<string, string>();
+        public Dictionary<string, string> _serverVersions = new Dictionary<string, string>();
+        private List<Download> _downloadCompletes = new List<Download>();       //下载完成
+        private Queue<Download> _waltDownloadQueue = new Queue<Download>();  // 等待下载的
         private Download _download = null;                                  // 当前正在下载的
-        private List<Download> _downloadCompletes = null;       //下载完成
-        private Queue<Download> _waltDownloadQueue = null;  // 等待下载的
 
         private bool _isDownload = false;
         private Action _onUpdateSucceed;
         private Action<string> _onUpdateFailed;
         private Action<UpdatingInfo> _onProgress;
-        private UpdatingInfo _updatingInfo = new UpdatingInfo();
+        private UpdatingInfo _updatingInfo = null;
         private long _updateSuccessLength = 0;
 
         public UpdateControl()
-        {
-            _waltDownloadQueue = new Queue<Download>();
+        { 
         }
-
-
+         
         /// <summary>
         /// 检查版本
         /// </summary>
@@ -38,7 +36,6 @@ namespace Plugins.XAsset
         /// <param name="onWaitUpdate">等待更新</param>
         public void CheckVersion(Action<VersionInfo> onSucceed, Action<string> onFailed)
         {
-            Versions.Load();
             var path = Utility.GetRelativePath4Update(VERSION_NAME);
             if (!File.Exists(path))
             {
@@ -63,6 +60,26 @@ namespace Plugins.XAsset
             {
                 LoadVersions(File.ReadAllText(path), onSucceed, onFailed);
             }
+        }
+
+        public void Clear()
+        {
+            var dir = Path.GetDirectoryName(Utility.updatePath);
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, true);
+            }
+
+            _waltDownloadQueue.Clear();
+            _downloadCompletes.Clear();
+            _versions.Clear();
+            _serverVersions.Clear();
+
+            Versions.Clear();
+
+            var path = Utility.updatePath + Versions.versionFile;
+            if (File.Exists(path))
+                File.Delete(path);
         }
 
         public void Update()
@@ -100,7 +117,7 @@ namespace Plugins.XAsset
                     }
                 }
 
-                _updatingInfo.Fill(_updateSuccessLength, _downloadCompletes.Count);
+                _updatingInfo .Fill(_updateSuccessLength, _downloadCompletes.Count);
 
                 if (_waltDownloadQueue.Count == 0 && _download == null)
                 {
@@ -177,8 +194,8 @@ namespace Plugins.XAsset
                 _onUpdateSucceed = null;
             }
             _onUpdateFailed = null;
-            _onProgress = null; 
-            ResMgr.OutLog("nothing to update."); 
+            _onProgress = null;
+            ResMgr.OutLog("nothing to update.");
         }
 
         public void StartUpdateRes(Action onSucceed, Action<string> onFailed, Action<UpdatingInfo> onProgress)
@@ -214,7 +231,7 @@ namespace Plugins.XAsset
                         downloader.savePath = Utility.GetRelativePath4Update(item.Key);
                         _waltDownloadQueue.Enqueue(downloader);
                     }
-                } 
+                }
                 if (_waltDownloadQueue.Count == 0)
                 {
                     onSucceed(new VersionInfo());
@@ -231,7 +248,7 @@ namespace Plugins.XAsset
                     {
                         updateCount = _waltDownloadQueue.Count,
                     };
-                    _updatingInfo.Fill(versionInfo);
+                    _updatingInfo = new UpdatingInfo().Fill(versionInfo);
                     onSucceed(versionInfo);
                 }
             };
