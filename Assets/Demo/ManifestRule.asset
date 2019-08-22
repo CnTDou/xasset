@@ -16,10 +16,8 @@ MonoBehaviour:
   ignorePaths:
   - Assets/Demo/ManifestRule.asset
   - Assets/Demo/Settings.asset
+  - Assets/Demo/Scripts
   ruleInfos:
-  - path: Assets/Demo/Scripts
-    ruleType: 0
-    buildType: 0
   - path: Assets/Demo/Sprites
     ruleType: 0
     buildType: 0
@@ -30,5 +28,5 @@ MonoBehaviour:
     ruleType: 0
     buildType: 0
   - path: Assets/Demo/Scenes
-    ruleType: 0
+    ruleType: 1
     buildType: 0

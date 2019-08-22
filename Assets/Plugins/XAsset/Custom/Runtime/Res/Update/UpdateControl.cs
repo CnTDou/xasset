@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using UnityEngine;
 
 namespace Plugins.XAsset
@@ -37,6 +38,7 @@ namespace Plugins.XAsset
         /// <param name="onWaitUpdate">等待更新</param>
         public void CheckVersion(Action<VersionInfo> onSucceed, Action<string> onFailed)
         {
+            Versions.Load();
             var path = Utility.GetRelativePath4Update(VERSION_NAME);
             if (!File.Exists(path))
             {
@@ -78,7 +80,7 @@ namespace Plugins.XAsset
                 {
                     _download.Update();
 
-                    if (string.IsNullOrEmpty(_download.error))
+                    if (!string.IsNullOrEmpty(_download.error))
                     {
                         if (_onUpdateFailed != null)
                         {
@@ -102,6 +104,51 @@ namespace Plugins.XAsset
 
                 if (_waltDownloadQueue.Count == 0 && _download == null)
                 {
+                    _isDownload = false;
+
+                    Complete();
+                }
+            }
+        }
+
+        private void Complete()
+        {
+            Versions.Save();
+
+            if (_downloadCompletes.Count > 0)
+            {
+                for (int i = 0; i < _downloadCompletes.Count; i++)
+                {
+                    var item = _downloadCompletes[i];
+                    if (!item.isDone)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        if (_serverVersions.ContainsKey(item.path))
+                        {
+                            _versions[item.path] = _serverVersions[item.path];
+                        }
+                    }
+                }
+
+                StringBuilder sb = new StringBuilder();
+                foreach (var item in _versions)
+                {
+                    sb.AppendLine(string.Format("{0}:{1}", item.Key, item.Value));
+                }
+
+                var path = Utility.GetRelativePath4Update(VERSION_NAME);
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+
+                File.WriteAllText(path, sb.ToString());
+
+                Assets.Initialize(delegate
+                {
                     if (_onUpdateSucceed != null)
                     {
                         _onUpdateSucceed.Invoke();
@@ -109,9 +156,29 @@ namespace Plugins.XAsset
                     }
                     _onUpdateFailed = null;
                     _onProgress = null;
-                    _isDownload = false;
-                }
+                }, (err) =>
+                {
+                    if (_onUpdateFailed != null)
+                    {
+                        _onUpdateFailed.Invoke(err);
+                        _onUpdateFailed = null;
+                    }
+                    _onUpdateSucceed = null;
+                    _onProgress = null;
+                });
+                string message = string.Format("{0} files has update.", _downloadCompletes.Count);
+                ResMgr.OutLog(message);
+                return;
             }
+
+            if (_onUpdateSucceed != null)
+            {
+                _onUpdateSucceed.Invoke();
+                _onUpdateSucceed = null;
+            }
+            _onUpdateFailed = null;
+            _onProgress = null; 
+            ResMgr.OutLog("nothing to update."); 
         }
 
         public void StartUpdateRes(Action onSucceed, Action<string> onFailed, Action<UpdatingInfo> onProgress)
@@ -147,8 +214,7 @@ namespace Plugins.XAsset
                         downloader.savePath = Utility.GetRelativePath4Update(item.Key);
                         _waltDownloadQueue.Enqueue(downloader);
                     }
-                }
-                Debug.Log(_waltDownloadQueue.Count);
+                } 
                 if (_waltDownloadQueue.Count == 0)
                 {
                     onSucceed(new VersionInfo());

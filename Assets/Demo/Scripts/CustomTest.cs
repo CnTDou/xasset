@@ -6,22 +6,20 @@ using UnityEngine;
 
 public class CustomTest : MonoBehaviour
 {
+    public bool isUpdate = true;
     private void Start()
     {
-        ResMgr.Instance.Init(OnInitComplete, OnErr);
+        if (isUpdate)
+        {
+            Debug.Log("初始化完毕, 开始检查更新"); 
+            ResMgr.Instance.CheckVersion(OnCheckVersionSucceed, OnErr); 
+        }
+        else
+        { 
+            ResMgr.Instance.Init(EnterMain, OnErr);
+        }
     }
-
-    private void OnInitComplete()
-    {
-        // todo: 检查完成后 本地资源即可使用了 
-        // 进入游戏 玩 在包内部的资源可正常使用
-        //EnterMain();
-        Debug.Log("初始化完毕. 检查更新");
-         
-        // 可后台更新 不影响当前逻辑
-        ResMgr.Instance.CheckVersion(OnCheckVersionSucceed, OnErr);
-    }
-
+ 
     private void OnCheckVersionSucceed(VersionInfo versionInfo)
     {
         if (versionInfo.IsUpdate)
@@ -46,9 +44,7 @@ public class CustomTest : MonoBehaviour
         message += string.Format("Current Progress: {0} ", info.CurrentProgress);
         Debug.Log(message);
     }
-
-
-
+     
     private void OnErr(string err)
     {
         Debug.LogError(err);
@@ -58,15 +54,13 @@ public class CustomTest : MonoBehaviour
     private void EnterMain()
     {
         Debug.Log("资源流程完成. 进入主场景");
-        ResMgr.Instance.LoadPrefab("UIRoot",(obj)=> {
+        ResMgr.Instance.LoadPrefab("UIRoot", (obj) =>
+        {
+            Debug.Log("加载完成 "+obj); 
             if (obj)
             {
                 GameObject.Instantiate(obj);
-            }
-            else
-            {
-                Debug.LogError("加载失败");
-            }
-        },this);
+            } 
+        }, this);
     }
 }

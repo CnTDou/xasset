@@ -14,7 +14,7 @@ using LoadType = Plugins.XAsset.LoadType;
 public class ResMgr : MonoBehaviour
 {
     public const string RES_ROOT_PATH = Constnat.AssetRoot;
-    public const string RES_PREFABS_PATH = RES_ROOT_PATH + "Prefabs/";
+    public const string RES_PREFABS_PATH = "Prefabs/";
     public const string RES_SCENES_PATH = RES_ROOT_PATH + "Scenes/";
 
     #region ... 单例
@@ -127,13 +127,16 @@ public class ResMgr : MonoBehaviour
     /// <param name="onFailed"></param>
     public void CheckVersion(Action<VersionInfo> onSucceed, Action<string> onFailed)
     {
-        if (state != State.Completed)
+        switch (state)
         {
-            ResMgr.OutLog("res error RES.CheckVersion, state: {0}", state);
-            return;
+            case State.Wait:
+            case State.Completed:
+                break;
+            default:
+                ResMgr.OutLog("res error RES.CheckVersion, state: {0}", state);
+                return;
         }
         state = State.Checking;
-        Versions.Load(); 
         updateControl.CheckVersion((versionInfo) =>
         {
             state = versionInfo.IsUpdate ? State.WaitUpdate : State.Completed;
@@ -181,7 +184,7 @@ public class ResMgr : MonoBehaviour
     /// <param name="user">使用者 [必填] 引用计数作用</param>
     public void LoadPrefab(string prefabName, Action<Object> onCompleted, Object user)
     {
-        LoadAsync(prefabName, LoadType.PREFAB, onCompleted, user);
+        LoadAsync(RES_PREFABS_PATH + prefabName, LoadType.PREFAB, onCompleted, user);
     }
 
     /// <summary>
@@ -205,15 +208,13 @@ public class ResMgr : MonoBehaviour
     /// <param name="user">使用者 [必填] 引用计数作用</param>
     public void LoadAsync(string _path, LoadType _loadType, Action<Object> onCompleted, Object user)
     {
-        string suffix = ResMgr.Instance.GetSuffix(_loadType);
+        string suffix = GetSuffix(_loadType);
         if (string.IsNullOrEmpty(suffix))
         {
             Debug.LogWarningFormat("load async fail, Cannot get suffix by load type {0}.", _loadType);
         }
-        string fullPath = string.Format("{0}{1}", _path, suffix);
-        Type loadType = ResMgr.Instance.GetType(_loadType);
-
-        LoadAsync(fullPath, loadType, onCompleted, user);
+        _path = string.Format("{0}{1}.{2}", RES_ROOT_PATH, _path, suffix);
+        LoadAsync(_path, GetType(_loadType), onCompleted, user);
     }
 
     /// <summary>
@@ -245,6 +246,12 @@ public class ResMgr : MonoBehaviour
     /// <param name="user"></param>
     public void LoadAsync(string fullPath, Type loadType, Action<Object> onCompleted, Object user)
     {
+        if (state != State.Completed)
+        {
+            ResMgr.OutLog("res error RES.LoadAsync, state: {0} , no init", state);
+            return;
+        }
+
         Asset asset = Assets.LoadAsync(fullPath, loadType);
         asset.completed += (_asset) =>
         {
@@ -262,6 +269,8 @@ public class ResMgr : MonoBehaviour
                 {
                     onCompleted.Invoke(null);
                 }
+                ResMgr.OutLog("res error RES.LoadAsync, fullPath: {0} , loadType: {1} , error message: {2}.",
+                    fullPath, loadType, _asset.error);
             }
         };
     }
@@ -296,11 +305,11 @@ public class ResMgr : MonoBehaviour
     {
         switch (loadType)
         {
-            case LoadType.AUDIO_CLIP_OGG: return ".ogg";
-            case LoadType.AUDIO_CLIP_WAV: return ".wav";
-            case LoadType.AUDIO_CLIP_MP3: return ".mp3";
-            case LoadType.ANIMATION_CLIP: return ".anim";
-            case LoadType.SCENE: return ".unity";
+            case LoadType.AUDIO_CLIP_OGG: return "ogg";
+            case LoadType.AUDIO_CLIP_WAV: return "wav";
+            case LoadType.AUDIO_CLIP_MP3: return "mp3";
+            case LoadType.ANIMATION_CLIP: return "anim";
+            case LoadType.SCENE: return "unity";
             case LoadType.NONE:
                 return string.Empty;
         }
@@ -342,8 +351,6 @@ public class ResMgr : MonoBehaviour
     {
         Debug.LogFormat(format, args);
     }
-}
 
-public delegate void LoadSucceed(Object @object);
-public delegate void LoadFailed(string path, string error);
-public delegate void Loadind(string path, float progress);
+}
+  
