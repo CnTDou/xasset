@@ -40,7 +40,51 @@ MonoBehaviour:
   - variant: -1
     bundle: 1
     dir: 1
+    name: UIRoot10.prefab
+  - variant: -1
+    bundle: 1
+    dir: 1
+    name: UIRoot11.prefab
+  - variant: -1
+    bundle: 1
+    dir: 1
+    name: UIRoot12.prefab
+  - variant: -1
+    bundle: 1
+    dir: 1
+    name: UIRoot13.prefab
+  - variant: -1
+    bundle: 1
+    dir: 1
     name: UIRoot2.prefab
+  - variant: -1
+    bundle: 1
+    dir: 1
+    name: UIRoot3.prefab
+  - variant: -1
+    bundle: 1
+    dir: 1
+    name: UIRoot4.prefab
+  - variant: -1
+    bundle: 1
+    dir: 1
+    name: UIRoot5.prefab
+  - variant: -1
+    bundle: 1
+    dir: 1
+    name: UIRoot6.prefab
+  - variant: -1
+    bundle: 1
+    dir: 1
+    name: UIRoot7.prefab
+  - variant: -1
+    bundle: 1
+    dir: 1
+    name: UIRoot8.prefab
+  - variant: -1
+    bundle: 1
+    dir: 1
+    name: UIRoot9.prefab
   - variant: -1
     bundle: 2
     dir: 2

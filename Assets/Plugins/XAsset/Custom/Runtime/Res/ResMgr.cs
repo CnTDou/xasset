@@ -423,30 +423,34 @@ public class ResMgr : MonoBehaviour
                 if (state == State.Completed)
                 {
                     int maxIndex = current + _max;
-                    maxIndex = maxIndex >= Assets.bundleAssets.Count ? Assets.bundleAssets.Count - 1 : maxIndex;
+                    maxIndex = maxIndex >= Assets.bundleAssets.Count ? Assets.bundleAssets.Count : maxIndex;
                     GUILayout.Label(string.Format("AllBundleAssets , allCount : {0} , minIndex: {1} , maxIndex: {2}",
                         Assets.bundleAssets.Count, current, maxIndex));
 
-                    if (GUILayout.Button("<<", GUILayout.MaxWidth(80)))
+                    GUILayout.BeginHorizontal();
                     {
-                        current -= _max;
-                        if (current <= 0)
-                        {
-                            current = 0;
-                        }
-                    }
-                    if (GUILayout.Button(">>", GUILayout.MaxWidth(80)))
-                    {
-                        current += _max;
-                        if (current >= Assets.bundleAssets.Count)
+                        if (GUILayout.Button("<<", GUILayout.MaxWidth(80)))
                         {
                             current -= _max;
+                            if (current <= 0)
+                            {
+                                current = 0;
+                            }
                         }
-                        if (current < 0)
+                        if (GUILayout.Button(">>", GUILayout.MaxWidth(80)))
                         {
-                            current = 0;
+                            current += _max;
+                            if (current >= Assets.bundleAssets.Count)
+                            {
+                                current -= _max;
+                            }
+                            if (current < 0)
+                            {
+                                current = 0;
+                            }
                         }
                     }
+                    GUILayout.EndHorizontal();
 
                     curIndex = 0;
                     foreach (var item in Assets.bundleAssets)
