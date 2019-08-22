@@ -374,6 +374,9 @@ public class ResMgr : MonoBehaviour
 
     string message, assetPath;
 
+    int curIndex;
+    int current, _max = 8;
+
     private void OnGUI()
     {
         if (isWindow)
@@ -385,7 +388,7 @@ public class ResMgr : MonoBehaviour
                     case State.Wait:
                         if (GUILayout.Button("Init"))
                         {
-                            Init(()=> { message = " ready ."; }, (err) => { message = err; });
+                            Init(() => { message = " ready ."; }, (err) => { message = err; });
                         }
                         if (GUILayout.Button("Check"))
                         {
@@ -419,12 +422,42 @@ public class ResMgr : MonoBehaviour
                 GUILayout.Label(string.Format("{0}:{1}", state, message));
                 if (state == State.Completed)
                 {
-                    GUILayout.Label("AllBundleAssets:");
+                    int maxIndex = current + _max;
+                    maxIndex = maxIndex >= Assets.bundleAssets.Count ? Assets.bundleAssets.Count - 1 : maxIndex;
+                    GUILayout.Label(string.Format("AllBundleAssets , allCount : {0} , minIndex: {1} , maxIndex: {2}",
+                        Assets.bundleAssets.Count, current, maxIndex));
+
+                    if (GUILayout.Button("<<", GUILayout.MaxWidth(80)))
+                    {
+                        current -= _max;
+                        if (current <= 0)
+                        {
+                            current = 0;
+                        }
+                    }
+                    if (GUILayout.Button(">>", GUILayout.MaxWidth(80)))
+                    {
+                        current += _max;
+                        if (current >= Assets.bundleAssets.Count)
+                        {
+                            current -= _max;
+                        }
+                        if (current < 0)
+                        {
+                            current = 0;
+                        }
+                    }
+
+                    curIndex = 0;
                     foreach (var item in Assets.bundleAssets)
                     {
-                        if (GUILayout.Button(item.Key))
+                        curIndex++;
+                        if (curIndex > current && curIndex < (current + _max))
                         {
-                            assetPath = item.Key;
+                            if (GUILayout.Button(item.Key))
+                            {
+                                assetPath = item.Key;
+                            }
                         }
                     }
 

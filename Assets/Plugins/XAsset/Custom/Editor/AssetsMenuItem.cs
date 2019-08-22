@@ -23,9 +23,15 @@ namespace Plugins.XAsset.Editor
             _BuildManifest(BuildType.Network);
         }
 
+        [MenuItem(@"Tools/AssetBundles/生成 Package 资源包")]
+        public static void BuildPackage()
+        {
+            _BuildManifestByRule();
+            BuildAssetBundles(); 
+        }
 
         [MenuItem(@"Tools/AssetBundles/生成 Package 资源包 并 Copy to StreamingAssets")]
-        public static void BuildPackage()
+        public static void BuildPackageAndCopy()
         {
             _BuildManifestByRule();
             BuildAssetBundles();
