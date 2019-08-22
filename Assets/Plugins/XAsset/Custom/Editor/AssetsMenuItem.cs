@@ -106,7 +106,6 @@ namespace Plugins.XAsset.Editor
                 if (Directory.Exists(path) || path.EndsWith(".cs", System.StringComparison.CurrentCulture))
                     continue;
                 var assetBundleName = TrimedAssetBundleName(Path.GetDirectoryName(path).Replace("\\", "/")) + "_g";
-                Debug.Log(assetBundleName);
                 BuildScript.SetAssetBundleNameAndVariant(path, assetBundleName.ToLower(), null, assetsManifest);
             }
         }
