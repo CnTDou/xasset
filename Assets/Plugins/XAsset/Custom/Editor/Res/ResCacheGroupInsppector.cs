@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -7,8 +8,8 @@ using Object = UnityEngine.Object;
 
 namespace Plugins.XAsset.Editor
 {
-    [CustomEditor(typeof(ResMgr))]
-    public class ResMgrInspector : UnityEditor.Editor
+    [CustomEditor(typeof(ResCacheGroup))]
+    public class ResCacheGroupInsppector : UnityEditor.Editor
     {
         private readonly HashSet<string> m_OpenedItems = new HashSet<string>();
 
@@ -20,69 +21,50 @@ namespace Plugins.XAsset.Editor
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
-            var t = (ResMgr)target;
 
             if (!Application.isPlaying)
                 return;
 
-            EditorGUILayout.BeginVertical();
+            var t = (ResCacheGroup)target;
+
+            EditorGUILayout.BeginVertical("box");
             {
                 EditorGUILayout.BeginHorizontal();
                 {
-                    if (GUILayout.Button("init", EditorStyles.toolbarButton, GUILayout.MaxWidth(100)))
+                    if (GUILayout.Button("全部折叠", EditorStyles.toolbarButton, GUILayout.MaxWidth(100)))
                     {
-                        t.Init(null, null);
+                        m_OpenedItems.Clear();
                     }
-                    if (GUILayout.Button("check", EditorStyles.toolbarButton, GUILayout.MaxWidth(100)))
+                    if (GUILayout.Button("UnloadAll", EditorStyles.toolbarButton, GUILayout.MaxWidth(100)))
                     {
-                        ResMgr.Instance.CheckVersion((v) =>
-                        {
-                            ResMgr.Instance.StartUpdateRes(null, null, null);
-                        }, null);
-                    }
-                    if (GUILayout.Button("clear", EditorStyles.toolbarButton, GUILayout.MaxWidth(100)))
-                    {
-                        if (EditorUtility.DisplayDialog("Clear", "Do you really want to  clear the all?", "OK", "Cancel"))
-                            t.Clear();
+                        t.UnloadAll();
                     }
                 }
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.Space();
 
-                DrawDictionary("Update.Version ", t.updateControl._versions);
-
-                DrawDictionary("Update.ServerVersion ", t.updateControl._serverVersions);
-
-                DrawDictionary("Versions.data ", Versions.data); 
-
-                DrawDictionary("Assets.bundleAssets ", Assets.bundleAssets);
+                EditorGUILayout.LabelField("IsDone : " + t.IsDone);
+                EditorGUILayout.LabelField("Ready Count : " + t.ReadyCount);
+                EditorGUILayout.LabelField("WaitLoad Count : " + t.WaitLoadCount);
+                EditorGUILayout.LabelField("Loading Count : " + t.LoadingCount);
+                EditorGUILayout.LabelField("Max Loading Count : " + t.MaxLoadingCount);
 
 
-                DrawList<List<Asset>, Asset>("Assets._assets ", typeof(Assets).ToString(), "_assets");
-
-                DrawList<List<Asset>, Asset>("Assets._unusedAssets ", typeof(Assets).ToString(), "_unusedAssets"); 
-
-                DrawList<List<Bundle>, Bundle>("Bundles._bundles  ", typeof(Bundles).ToString(), "_bundles");
-
-                DrawList<List<Bundle>, Bundle>("Bundles._loading  ", typeof(Bundles).ToString(), "_loading");
-
-                DrawList<List<Bundle>, Bundle>("Bundles._ready2Load  ", typeof(Bundles).ToString(), "_ready2Load");
-
-                DrawList<List<Bundle>, Bundle>("Bundles._unusedBundles  ", typeof(Bundles).ToString(), "_unusedBundles");
+                DrawDictionary("ResMgr.groupDic ", Util.GetPrivateField<Dictionary<string, IRes>>(t, "readyDic"));
 
             }
             EditorGUILayout.EndVertical();
 
         }
 
-        private void DrawDictionary<TKey, TValue>(string fullName, Dictionary<TKey, TValue> dic)
+        private void DrawDictionary<TKey, TValue>(string fullName, Dictionary<TKey, TValue> dic, bool isDrawValue = false)
         {
             EditorGUILayout.BeginVertical("box");
             {
                 EditorGUI.indentLevel++;
 
                 EditorGUILayout.LabelField(fullName + " Count:" + dic.Count);
-                bool currentState = GetState(fullName + " Collections");
+                bool currentState = GetState(fullName + " Collections " + fullName.GetHashCode());
                 if (currentState)
                 {
                     if (dic.Count > 0)
@@ -90,6 +72,10 @@ namespace Plugins.XAsset.Editor
                         foreach (var item in dic)
                         {
                             EditorGUILayout.LabelField(item.Key + " : " + item.Value);
+                            if (isDrawValue)
+                            {
+                                DrawDictionary(item.Key + " " + item.Key.GetHashCode(), Util.GetFieIds(item.Value));
+                            }
                         }
                     }
                     else
@@ -109,8 +95,8 @@ namespace Plugins.XAsset.Editor
             bool currentState = GetState(" " + fullName + " Collections [注:请在不使用时关闭,展开时会有一定性能损耗.]");
             if (currentState)
             {
-                var list = Util.GetStaticField<T>(type, fieidName); 
-                DrawList<T, TValue>(fullName, list); 
+                var list = Util.GetStaticField<T>(type, fieidName);
+                DrawList<T, TValue>(fullName, list);
             }
         }
 
@@ -127,7 +113,7 @@ namespace Plugins.XAsset.Editor
                     EditorGUI.indentLevel++;
 
                     EditorGUILayout.LabelField(fullName + " Count:" + list.Count);
-                    bool currentState = GetState(fullName + " Collections");
+                    bool currentState = GetState(fullName + " Collections ");
                     if (currentState)
                     {
                         if (list.Count > 0)
@@ -156,7 +142,7 @@ namespace Plugins.XAsset.Editor
 
         private bool DrawItem<TValue>(TValue item)
         {
-            bool currentState = GetState("Item:" + item);
+            bool currentState = GetState(" Item : " + item + " hashCode:" + item.GetHashCode());
             if (currentState)
             {
                 EditorGUI.indentLevel++;

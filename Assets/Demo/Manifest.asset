@@ -11,19 +11,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6951743adb93844fcb5ddf53e02547c9, type: 3}
   m_Name: Manifest
   m_EditorClassIdentifier: 
-  downloadURL: http://192.168.1.124:7888/
+  downloadURL: http://192.168.1.124:8089/
   activeVariants: []
   bundles:
   - assets/demo/sprites_g
   - assets/demo/prefabs_g
   - assets/demo/scenes/init
   - assets/demo/scenes/test
-  - manifest
   dirs:
   - Assets/Demo/Sprites
   - Assets/Demo/Prefabs
   - Assets/Demo/Scenes
-  - Assets/Demo
   assets:
   - variant: -1
     bundle: 0
@@ -37,22 +35,6 @@ MonoBehaviour:
     bundle: 1
     dir: 1
     name: UIRoot.prefab
-  - variant: -1
-    bundle: 1
-    dir: 1
-    name: UIRoot10.prefab
-  - variant: -1
-    bundle: 1
-    dir: 1
-    name: UIRoot11.prefab
-  - variant: -1
-    bundle: 1
-    dir: 1
-    name: UIRoot12.prefab
-  - variant: -1
-    bundle: 1
-    dir: 1
-    name: UIRoot13.prefab
   - variant: -1
     bundle: 1
     dir: 1
@@ -70,22 +52,6 @@ MonoBehaviour:
     dir: 1
     name: UIRoot5.prefab
   - variant: -1
-    bundle: 1
-    dir: 1
-    name: UIRoot6.prefab
-  - variant: -1
-    bundle: 1
-    dir: 1
-    name: UIRoot7.prefab
-  - variant: -1
-    bundle: 1
-    dir: 1
-    name: UIRoot8.prefab
-  - variant: -1
-    bundle: 1
-    dir: 1
-    name: UIRoot9.prefab
-  - variant: -1
     bundle: 2
     dir: 2
     name: Init.unity
@@ -93,7 +59,3 @@ MonoBehaviour:
     bundle: 3
     dir: 2
     name: Test.unity
-  - variant: -1
-    bundle: 4
-    dir: 3
-    name: Manifest.asset

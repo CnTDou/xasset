@@ -12,7 +12,7 @@ namespace Plugins.XAsset.Editor
     {
         private const string BackupFileSuffixName = ".bak";
         private static string UNITY_PATH = Util.GetRegularPath(Application.dataPath);
-
+         
         #region ... Field
 
         public static T GetStaticField<T>(string typeName, string fieldName)
@@ -24,7 +24,7 @@ namespace Plugins.XAsset.Editor
                 {
                     var field = t.GetField(fieldName, BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
                     if (field != null)
-                        return (T)field.GetValue(t); 
+                        return (T)field.GetValue(t);
                 }
                 return default(T);
             }

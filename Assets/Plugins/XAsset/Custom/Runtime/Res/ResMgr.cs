@@ -6,10 +6,15 @@ using UnityEngine;
 using UnityEngine.Collections;
 using Object = UnityEngine.Object;
 using LoadType = Plugins.XAsset.LoadType;
+using UtilText = GameFramework.Utility.Text;
 
 
 /// <summary>
 /// 资源总管理器
+///     user 含义:使用者 
+///         例如 
+///             创建prefab user传入预制件父级 当父级销毁引用自动-1
+///             创建sprite user传入 image GameObject或者image自身 这样当 被销毁引用--
 /// </summary>
 public class ResMgr : MonoBehaviour
 {
@@ -34,15 +39,25 @@ public class ResMgr : MonoBehaviour
         {
             if (!instance)
             {
-                GameObject singleton = new GameObject(typeof(ResMgr).Name);
-                if (!singleton)
-                    throw new System.NullReferenceException();
+                instance = FindObjectOfType<ResMgr>();
+                if (!instance)
+                {
+                    GameObject singleton = new GameObject(typeof(ResMgr).Name);
+                    if (!singleton)
+                        throw new System.NullReferenceException();
 
-                instance = singleton.AddComponent<ResMgr>();
-                if (singleton.GetComponent<Assets>() == null)
-                    singleton.AddComponent<Assets>();
-                if (Application.isPlaying)
-                    GameObject.DontDestroyOnLoad(singleton);
+                    instance = singleton.AddComponent<ResMgr>();
+
+                    if (Application.isPlaying)
+                        GameObject.DontDestroyOnLoad(singleton);
+                }
+
+                var assets = FindObjectOfType<Assets>();
+                if (!assets)
+                {
+                    assets = instance.gameObject.AddComponent<Assets>();
+                }
+
             }
             return instance;
         }
@@ -128,7 +143,6 @@ public class ResMgr : MonoBehaviour
     {
         switch (state)
         {
-            case State.Wait:
             case State.Completed:
                 break;
             default:
@@ -136,7 +150,6 @@ public class ResMgr : MonoBehaviour
                 return;
         }
         state = State.Checking;
-        Versions.Load();
         updateControl.CheckVersion((versionInfo) =>
         {
             state = versionInfo.IsUpdate ? State.WaitUpdate : State.Completed;
@@ -202,9 +215,10 @@ public class ResMgr : MonoBehaviour
     /// <param name="prefabName">预制件名称 xxx </param>
     /// <param name="onCompleted">加载完成</param>
     /// <param name="user">使用者 [必填] 引用计数作用</param>
-    public void LoadPrefab(string prefabName, Action<Object> onCompleted, Object user)
+    public void LoadPrefab(string prefabName, Action<IRes> onCompleted)
     {
-        LoadAsync(RES_PREFABS_PATH + prefabName, LoadType.PREFAB, onCompleted, user);
+        LoadAsync(UtilText.Format("{0}{1}", RES_PREFABS_PATH, prefabName),
+            LoadType.PREFAB, onCompleted);
     }
 
     /// <summary>
@@ -226,73 +240,78 @@ public class ResMgr : MonoBehaviour
     /// </param>
     /// <param name="onCompleted"></param>
     /// <param name="user">使用者 [必填] 引用计数作用</param>
-    public void LoadAsync(string _path, LoadType _loadType, Action<Object> onCompleted, Object user)
+    public void LoadAsync(string _path, LoadType _loadType, Action<IRes> onCompleted)
     {
         string suffix = GetSuffix(_loadType);
         if (string.IsNullOrEmpty(suffix))
         {
-            Debug.LogWarningFormat("load async fail, Cannot get suffix by load type {0}.", _loadType);
+            ResMgr.OutLog("res warn RES.LoadAsync, Cannot get suffix by load type {0}.", _loadType);
         }
-        _path = string.Format("{0}{1}.{2}", RES_ROOT_PATH, _path, suffix);
-        LoadAsync(_path, GetType(_loadType), onCompleted, user);
+        _path = UtilText.Format("{0}{1}.{2}", RES_ROOT_PATH, _path, suffix);
+        LoadAsync(_path, GetType(_loadType), onCompleted);
     }
 
     /// <summary>
-    /// 异步加载 [不推荐使用,建议封装LoadType方式使用] 
-    ///     注意此方法需要完成路径  路径.后缀
+    /// 异步加载
+    ///     路径.后缀
     /// </summary>
-    /// <param name="fullPath"></param>
+    /// <param name="_path">路径.后缀</param>
     /// <param name="type"></param>
     /// <param name="onCompleted"></param> 
     /// <param name="user"></param>
-    public void LoadAsync<T>(string fullPath, Action<T> onSucceed, Object user) where T : Object
+    public void LoadAsync<T>(string _pathAndSuffix, Action<IRes> onSucceed) where T : Object
     {
-        LoadAsync(fullPath, typeof(T), (asset) =>
+        string fullPath = UtilText.Format("{0}{1}.{2}", RES_ROOT_PATH, _pathAndSuffix);
+        LoadAsync(fullPath, typeof(T), (res) =>
         {
             if (onSucceed != null)
             {
-                onSucceed.Invoke(asset as T);
+                onSucceed.Invoke(res);
             }
-        }, user);
+        });
     }
 
     /// <summary>
-    /// 异步加载 [不推荐使用,建议封装LoadType方式使用] 
+    /// 异步加载 [注意:使用]
     ///     注意此方法需要完成路径  路径.后缀
     /// </summary>
     /// <param name="fullPath"></param>
     /// <param name="type"></param>
     /// <param name="onCompleted"></param> 
     /// <param name="user"></param>
-    public void LoadAsync(string fullPath, Type loadType, Action<Object> onCompleted, Object user)
+    public void LoadAsync(string fullPath, Type loadType, Action<IRes> onCompleted)
     {
         if (state != State.Completed)
         {
             ResMgr.OutLog("res error RES.LoadAsync, state: {0} , no init", state);
             return;
         }
-
         Asset asset = Assets.LoadAsync(fullPath, loadType);
         asset.completed += (_asset) =>
         {
-            if (string.IsNullOrEmpty(_asset.error))
-            {
-                if (onCompleted != null)
-                {
-                    _asset.Require(user);
-                    onCompleted.Invoke(_asset.asset);
-                }
-            }
-            else
-            {
-                if (onCompleted != null)
-                {
-                    onCompleted.Invoke(null);
-                }
-                ResMgr.OutLog("res error RES.LoadAsync, fullPath: {0} , loadType: {1} , error message: {2}.",
-                    fullPath, loadType, _asset.error);
-            }
+            OnLoadComplete(fullPath, onCompleted, _asset);
         };
+    }
+
+    private void OnLoadComplete(string fullPath, Action<IRes> onCompleted, Asset _asset)
+    {
+        if (string.IsNullOrEmpty(_asset.error) && _asset.asset)
+        {
+            if (onCompleted != null)
+            {
+                IRes res = new ResInfo(_asset);
+                onCompleted.Invoke(res); 
+            }
+        }
+        else
+        {
+            if (onCompleted != null)
+            {
+                onCompleted.Invoke(null);
+            }
+            ResMgr.OutLog("res error RES.LoadAsync, fullPath: {0} , type: {1} , asset: {2} , error message: {3}.",
+                fullPath, _asset.assetType, _asset.asset, _asset.error);
+        }
     }
 
     #endregion
@@ -301,27 +320,73 @@ public class ResMgr : MonoBehaviour
 
     public SceneAssetAsync LoadSceneAsync(string sceneName)
     {
-        SceneAssetAsync sceneAsset = Assets.LoadScene(RES_SCENES_PATH + sceneName, true, false) as SceneAssetAsync;
+        string _path = UtilText.Format("{0}{1}.{2}", RES_SCENES_PATH, sceneName, GetSuffix(LoadType.SCENE));
+        SceneAssetAsync sceneAsset = Assets.LoadScene(_path, true, false) as SceneAssetAsync;
         return sceneAsset;
     }
 
     public void UnloadScene(string sceneName)
     {
-        Assets.UnloadScene(RES_SCENES_PATH + sceneName);
+        string _path = UtilText.Format("{0}{1}.{2}", RES_SCENES_PATH, sceneName, GetSuffix(LoadType.SCENE));
+        Assets.UnloadScene(_path);
     }
 
     #endregion
 
-    #region ... Cache
+    #region ... Cache 
+    private const string DEFAULT_CACHE = "default"; 
+    private Dictionary<string, ResCacheGroup> groupDic = new Dictionary<string, ResCacheGroup>();
 
-    public T GetCache<T>(string path, Object user) where T : Object
+    private ResCacheGroup TryGetGroup(string groupName)
     {
-        return null;
+        ResCacheGroup group;
+        if (!groupDic.TryGetValue(groupName, out group))
+        {
+            GameObject go = new GameObject(groupName);
+            go.transform.SetParent(transform);
+            group = go.AddComponent<ResCacheGroup>();
+            groupDic.Add(groupName, group);
+        }
+        return group;
+    }
+
+    private void AddCache(string groupName, IRes res)
+    {
+        ResCacheGroup group = TryGetGroup(groupName);
+        group.AddReady(res);
+    }
+
+    public void LoadCache(string groupName, LoadParam[] loadParams, Action onComplete, LoadingCache onLoading = null)
+    {
+        ResCacheGroup group = TryGetGroup(groupName);
+        group.Add(loadParams, onComplete, onLoading);
+    }
+
+    public void UnloadCache(string groupName)
+    {
+        ResCacheGroup group = TryGetGroup(groupName);
+        group.UnloadAll();
+    }
+
+    public T GetCache<T>(string _path, LoadType _loadType, Object user, string groupName) where T : Object
+    {
+        ResCacheGroup group = TryGetGroup(groupName);
+
+        string suffix = GetSuffix(_loadType);
+        if (string.IsNullOrEmpty(suffix))
+        {
+            ResMgr.OutLog("res warn RES.GetCache<T:{0}>, path: {1} , Cannot get suffix by load type: {2} , user: {3} , groupName: {4} .",
+                typeof(T), _path, _loadType, user, groupName);
+        }
+        _path = UtilText.Format("{0}{1}.{2}", RES_ROOT_PATH, _path, suffix);
+        return group.Get(_path, user) as T;
     }
 
     #endregion
 
-    public string GetSuffix(LoadType loadType)
+    #region ... Util
+
+    public static string GetSuffix(LoadType loadType)
     {
         switch (loadType)
         {
@@ -336,34 +401,33 @@ public class ResMgr : MonoBehaviour
         return loadType.ToString().ToLower();
     }
 
-    public Type GetType(LoadType loadType)
+    public static Type GetType(LoadType loadType)
     {
-        Type _type = typeof(Object);
-        //switch (loadType)
-        //{ 
-        //    case LoadType.PREFAB:
-        //        _type = typeof(GameObject);
-        //        break;
-        //    case LoadType.JPG: 
-        //    case LoadType.JPEG: 
-        //    case LoadType.PNG:
-        //        _type = typeof(Texture2D); 
-        //        break;
-        //    case LoadType.AUDIO_CLIP_OGG: 
-        //    case LoadType.AUDIO_CLIP_WAV: 
-        //    case LoadType.AUDIO_CLIP_MP3:
-        //        _type = typeof(AudioClip); 
-        //        break;
-        //    case LoadType.ANIMATION_CLIP:
-        //        _type = typeof(AnimationClip); 
-        //        break;
-        //    case LoadType.NONE:
-        //    case LoadType.SCENE: 
-        //    default:
-        //        _type = typeof(Object);
-        //        break;
-        //}
-
+        Type _type = typeof(UnityEngine.Object);
+        switch (loadType)
+        {
+            case LoadType.PREFAB:
+                _type = typeof(GameObject);
+                break;
+            case LoadType.JPG:
+            case LoadType.JPEG:
+            case LoadType.PNG:
+                _type = typeof(Texture2D);
+                break;
+            case LoadType.AUDIO_CLIP_OGG:
+            case LoadType.AUDIO_CLIP_WAV:
+            case LoadType.AUDIO_CLIP_MP3:
+                _type = typeof(AudioClip);
+                break;
+            case LoadType.ANIMATION_CLIP:
+                _type = typeof(AnimationClip);
+                break;
+            case LoadType.NONE:
+            case LoadType.SCENE:
+            default:
+                _type = typeof(UnityEngine.Object);
+                break;
+        }
         return _type;
     }
 
@@ -372,11 +436,14 @@ public class ResMgr : MonoBehaviour
         Debug.LogFormat(format, args);
     }
 
+    #endregion
+
+    #region ... Test
     string message, assetPath;
 
     int curIndex;
     int current, _max = 8;
-
+    bool isCheck;
     private void OnGUI()
     {
         if (isWindow)
@@ -390,33 +457,37 @@ public class ResMgr : MonoBehaviour
                         {
                             Init(() => { message = " ready ."; }, (err) => { message = err; });
                         }
-                        if (GUILayout.Button("Check"))
-                        {
-                            CheckVersion((vinfo) =>
-                            {
-                                if (vinfo.IsUpdate)
-                                {
-                                    StartUpdateRes(null, (err) => { message = err; }, (uinfo) =>
-                                    {
-                                        message = "更新中 : \r\n";
-                                        message += string.Format("Count: {0}/{1} -\r\n", uinfo.TotalUpdateSuccessCount, uinfo.TotalUpdateCount);
-                                        message += string.Format("Length: {0}/{1} -\r\n", uinfo.TotalUpdateSuccessLength, uinfo.TotalUpdateLength);
-                                        message += string.Format("Speed: {0} -\r\n", uinfo.NetworkSpeed);
-                                        message += string.Format("Current Length: {0}/{1} -\r\n", uinfo.CurrentSuccessLength, uinfo.CurrentTotalLength);
-                                        message += string.Format("Current Progress: {0} ", uinfo.CurrentProgress);
-                                    });
-                                }
-                            }, (err) => { message = err; });
-                        }
+                        isCheck = true;
                         break;
                     case State.Completed:
+                        isCheck = true;
                         if (GUILayout.Button("Clear"))
                         {
                             Clear();
                         }
                         break;
                     default:
+                        isCheck = false;
                         break;
+                }
+
+                if (isCheck && GUILayout.Button("Check"))
+                {
+                    CheckVersion((vinfo) =>
+                    {
+                        if (vinfo.IsUpdate)
+                        {
+                            StartUpdateRes(null, (err) => { message = err; }, (uinfo) =>
+                            {
+                                message = "更新中 : \r\n";
+                                message += string.Format("Count: {0}/{1} -\r\n", uinfo.TotalUpdateSuccessCount, uinfo.TotalUpdateCount);
+                                message += string.Format("Length: {0}/{1} -\r\n", uinfo.TotalUpdateSuccessLength, uinfo.TotalUpdateLength);
+                                message += string.Format("Speed: {0} -\r\n", uinfo.NetworkSpeed);
+                                message += string.Format("Current Length: {0}/{1} -\r\n", uinfo.CurrentSuccessLength, uinfo.CurrentTotalLength);
+                                message += string.Format("Current Progress: {0} ", uinfo.CurrentProgress);
+                            });
+                        }
+                    }, (err) => { message = err; });
                 }
 
                 GUILayout.Label(string.Format("{0}:{1}", state, message));
@@ -533,4 +604,6 @@ public class ResMgr : MonoBehaviour
         }
         loadedAssets.Add(asset);
     }
+    #endregion
+
 }
