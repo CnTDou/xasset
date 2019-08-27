@@ -10,27 +10,35 @@ namespace Plugins.XAsset.Editor
 {
     public static partial class AssetsMenuItem
     {
+        [MenuItem("Tools/AssetBundles/创建所需要配置", false, 20)]
+        public static void CreateConfig()
+        {
+            EditorUtility.SetDirty(BuildScript.GetSettings());
+            EditorUtility.SetDirty(BuildScript.GetManifest());
+            EditorUtility.SetDirty(BuildScript.GetAsset<ManifestRule>(Constnat.ManifestRulePath));
+            AssetDatabase.SaveAssets();
+        }
 
-        [MenuItem("Tools/AssetBundles/生成 Package 配置 [根据Rule文件]")]
+        [MenuItem("Tools/AssetBundles/生成 Package 配置 [根据Rule文件]",false,21)]
         public static void _BuildManifestByRule()
         {
             _BuildManifest(BuildType.Package);
         }
 
-        [MenuItem("Tools/AssetBundles/生成 Network 配置 [根据Rule文件]")]
+        [MenuItem("Tools/AssetBundles/生成 Network 配置 [根据Rule文件]", false, 22)]
         public static void _BuildNetworkManifestByRule()
         {
             _BuildManifest(BuildType.Network);
         }
 
-        [MenuItem(@"Tools/AssetBundles/生成 Package 资源包")]
+        [MenuItem(@"Tools/AssetBundles/生成 Package 资源包", false, 23)]
         public static void BuildPackage()
         {
             _BuildManifestByRule();
-            BuildAssetBundles(); 
+            BuildAssetBundles();
         }
 
-        [MenuItem(@"Tools/AssetBundles/生成 Package 资源包 并 Copy to StreamingAssets")]
+        [MenuItem(@"Tools/AssetBundles/生成 Package 资源包 并 Copy to StreamingAssets", false, 24)]
         public static void BuildPackageAndCopy()
         {
             _BuildManifestByRule();
@@ -38,7 +46,7 @@ namespace Plugins.XAsset.Editor
             CopyAssetBundles();
         }
 
-        [MenuItem("Tools/AssetBundles/生成 Network 资源包 并 上传")]
+        [MenuItem("Tools/AssetBundles/生成 Network 资源包 并 上传", false, 25)]
         public static void BuildNetwork()
         {
             _BuildNetworkManifestByRule();
@@ -108,7 +116,7 @@ namespace Plugins.XAsset.Editor
 
             for (int i = 0; i < fileInfos.Count; i++)
             {
-                path = Util.GetUnityAssetPath(fileInfos[i].FullName); 
+                path = Util.GetUnityAssetPath(fileInfos[i].FullName);
                 if (Directory.Exists(path) || path.EndsWith(".cs", System.StringComparison.CurrentCulture))
                     continue;
                 var assetBundleName = TrimedAssetBundleName(Path.GetDirectoryName(path).Replace("\\", "/")) + "_g";
