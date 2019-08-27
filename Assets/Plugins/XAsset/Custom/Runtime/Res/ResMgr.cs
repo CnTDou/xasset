@@ -11,10 +11,13 @@ using UtilText = GameFramework.Utility.Text;
 
 /// <summary>
 /// 资源总管理器
-///     user 含义:使用者 
+///     user :使用者 
 ///         例如 
 ///             创建prefab user传入预制件父级 当父级销毁引用自动-1
 ///             创建sprite user传入 image GameObject或者image自身 这样当 被销毁引用--
+///     path : 传入 从 Assets/Demo/ 之后的路径 Prefabs/UIRoot 不携带后缀
+///     pathAndSuffix : 传入 从 Assets/Demo/ 之后的路径 Prefabs/UIRoot.prefab 携带后缀
+///     fullPath : 传入完整的路径 Assets/Demo/Prefabs/UIRoot.prefab 
 /// </summary>
 public class ResMgr : MonoBehaviour
 {
