@@ -292,7 +292,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7fedcb04650b2b440a714f4a5b6adb69, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isWindow: 1
+  isWindow: 0
   state: 0
 --- !u!4 &1853573462
 Transform:

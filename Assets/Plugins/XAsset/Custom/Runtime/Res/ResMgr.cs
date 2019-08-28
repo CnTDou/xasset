@@ -264,7 +264,7 @@ public class ResMgr : MonoBehaviour
     /// <param name="user"></param>
     public void LoadAsync<T>(string _pathAndSuffix, Action<IRes> onSucceed) where T : Object
     {
-        string fullPath = UtilText.Format("{0}{1}.{2}", RES_ROOT_PATH, _pathAndSuffix);
+        string fullPath = UtilText.Format("{0}{1}", RES_ROOT_PATH, _pathAndSuffix);
         LoadAsync(fullPath, typeof(T), (res) =>
         {
             if (onSucceed != null)

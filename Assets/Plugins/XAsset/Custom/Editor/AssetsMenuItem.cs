@@ -19,7 +19,7 @@ namespace Plugins.XAsset.Editor
             AssetDatabase.SaveAssets();
         }
 
-        [MenuItem("Tools/AssetBundles/生成 Package 配置 [根据Rule文件]",false,21)]
+        [MenuItem("Tools/AssetBundles/生成 Package 配置 [根据Rule文件]", false, 21)]
         public static void _BuildManifestByRule()
         {
             _BuildManifest(BuildType.Package);
@@ -66,7 +66,9 @@ namespace Plugins.XAsset.Editor
             ManifestRule manifestRule = BuildScript.GetAsset<ManifestRule>(Constnat.ManifestRulePath);
             EditorUtility.DisplayProgressBar("Build Manifest", "Read ManifestRule", 1f);
 
-            assetsManifest.downloadURL = BuildScript.GetServerURL();
+            if (string.IsNullOrEmpty(assetsManifest.downloadURL))
+                assetsManifest.downloadURL = BuildScript.GetServerURL();
+
             assetsManifest.assets = new AssetData[0];
             assetsManifest.dirs = new string[0];
             assetsManifest.bundles = new string[0];
@@ -87,8 +89,11 @@ namespace Plugins.XAsset.Editor
 
                 switch (ruleInfo.ruleType)
                 {
+                    case RuleType.RootDir:
+                        SetAssetsWithDir(path, assetsManifest, true);
+                        break;
                     case RuleType.Dir:
-                        SetAssetsWithDir(path, assetsManifest);
+                        SetAssetsWithDir(path, assetsManifest, false);
                         break;
                     case RuleType.File:
                         SetAssetsWithFile(path, assetsManifest);
@@ -110,16 +115,18 @@ namespace Plugins.XAsset.Editor
                 assetsManifest.assets.Length, assetsManifest.bundles.Length);
         }
 
-        private static void SetAssetsWithDir(string path, AssetsManifest assetsManifest)
+        private static void SetAssetsWithDir(string path, AssetsManifest assetsManifest, bool isRootDir)
         {
             List<FileInfo> fileInfos = Util.GetFileInfoByFolder(path, SearchOption.AllDirectories);
+            var assetBundleName = TrimedAssetBundleName(Path.GetDirectoryName(path).Replace("\\", "/")) + "_g";
 
             for (int i = 0; i < fileInfos.Count; i++)
             {
                 path = Util.GetUnityAssetPath(fileInfos[i].FullName);
                 if (Directory.Exists(path) || path.EndsWith(".cs", System.StringComparison.CurrentCulture))
                     continue;
-                var assetBundleName = TrimedAssetBundleName(Path.GetDirectoryName(path).Replace("\\", "/")) + "_g";
+                if (!isRootDir)
+                    assetBundleName = TrimedAssetBundleName(Path.GetDirectoryName(path).Replace("\\", "/")) + "_g";
                 BuildScript.SetAssetBundleNameAndVariant(path, assetBundleName.ToLower(), null, assetsManifest);
             }
         }

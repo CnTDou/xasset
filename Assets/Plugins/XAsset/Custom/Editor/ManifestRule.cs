@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System.IO;
 
 namespace Plugins.XAsset.Editor
 {
@@ -11,6 +12,37 @@ namespace Plugins.XAsset.Editor
         public int resourceVersion = 0;
         public List<string> ignorePaths = new List<string>();
         public List<RuleInfo> ruleInfos = new List<RuleInfo>();
+        private void OnEnable()
+        {
+            ruleInfos.RemoveAll((info) =>
+            {
+                string path = info.path;
+                return !CheckExists(path);
+            });
+
+            ignorePaths.RemoveAll((path) => !CheckExists(path));
+        }
+
+        private bool CheckExists(string path)
+        {
+            if (path.EndsWith("/") || path.EndsWith(@"\"))
+            {
+                if (Directory.Exists(path))
+                {
+                    Debug.LogWarning("rule path 不存在自动清理: " + path);
+                    return false;
+                }
+            }
+            else
+            {
+                if (File.Exists(path))
+                {
+                    Debug.LogWarning("rule path 不存在自动清理: " + path);
+                    return false;
+                }
+            }
+            return true;
+        }
 
         public void AddRule(string folder)
         {
@@ -58,13 +90,15 @@ namespace Plugins.XAsset.Editor
     }
 
     public enum RuleType
-    { 
+    {
+        RootDir,
         Dir,
         File,
         FileName,
     }
+
     public enum BuildType
-    { 
+    {
         Package,
         Network,
     }

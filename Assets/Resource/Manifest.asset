@@ -11,51 +11,57 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6951743adb93844fcb5ddf53e02547c9, type: 3}
   m_Name: Manifest
   m_EditorClassIdentifier: 
-  downloadURL: http://192.168.1.124:8089/
+  downloadURL: http://192.168.1.124:8089/xasset/
   activeVariants: []
   bundles:
-  - assets/demo/sprites_g
-  - assets/demo/prefabs_g
-  - assets/demo/scenes/init
-  - assets/demo/scenes/test
+  - assets/resource/prefabs_g
+  - assets/resource/scenes/init
+  - assets/resource/scenes/test
+  - assets/resource/sprites_g
+  - manifest
   dirs:
-  - Assets/Demo/Sprites
-  - Assets/Demo/Prefabs
-  - Assets/Demo/Scenes
+  - Assets/Resource/Prefabs
+  - Assets/Resource/Scenes
+  - Assets/Resource/Sprites
+  - Assets/Resource
   assets:
   - variant: -1
     bundle: 0
     dir: 0
-    name: blackSquare.png
+    name: UIRoot.prefab
   - variant: -1
     bundle: 0
     dir: 0
-    name: UnityLogo.png
-  - variant: -1
-    bundle: 1
-    dir: 1
-    name: UIRoot.prefab
-  - variant: -1
-    bundle: 1
-    dir: 1
     name: UIRoot2.prefab
   - variant: -1
-    bundle: 1
-    dir: 1
+    bundle: 0
+    dir: 0
     name: UIRoot3.prefab
   - variant: -1
-    bundle: 1
-    dir: 1
+    bundle: 0
+    dir: 0
     name: UIRoot4.prefab
   - variant: -1
-    bundle: 1
-    dir: 1
+    bundle: 0
+    dir: 0
     name: UIRoot5.prefab
   - variant: -1
-    bundle: 2
-    dir: 2
+    bundle: 1
+    dir: 1
     name: Init.unity
+  - variant: -1
+    bundle: 2
+    dir: 1
+    name: Test.unity
   - variant: -1
     bundle: 3
     dir: 2
-    name: Test.unity
+    name: blackSquare.png
+  - variant: -1
+    bundle: 3
+    dir: 2
+    name: UnityLogo.png
+  - variant: -1
+    bundle: 4
+    dir: 3
+    name: Manifest.asset

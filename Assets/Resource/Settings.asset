@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Name: Settings
   m_EditorClassIdentifier: 
   runtimeMode: 1
-  localServer: 1
-  assetRootPath: Assets/Demo/
+  localServer: 0
+  assetRootPath: Assets/Resource/

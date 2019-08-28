@@ -14,19 +14,21 @@ MonoBehaviour:
   version: 1.0
   resourceVersion: 0
   ignorePaths:
-  - Assets/Demo/ManifestRule.asset
-  - Assets/Demo/Settings.asset
-  - Assets/Demo/Scripts
+  - Assets/Resource/ManifestRule.asset
+  - Assets/Resource/Settings.asset
   ruleInfos:
-  - path: Assets/Demo/Sprites
-    ruleType: 0
-    buildType: 0
-  - path: Assets/Demo/Manifest.asset
+  - path: Assets/Resource/Prefabs
     ruleType: 1
     buildType: 0
-  - path: Assets/Demo/Prefabs
-    ruleType: 0
+  - path: Assets/Resource/Scenes
+    ruleType: 2
     buildType: 0
-  - path: Assets/Demo/Scenes
+  - path: Assets/Resource/Scripts
     ruleType: 1
+    buildType: 0
+  - path: Assets/Resource/Sprites
+    ruleType: 1
+    buildType: 0
+  - path: Assets/Resource/Manifest.asset
+    ruleType: 2
     buildType: 0
