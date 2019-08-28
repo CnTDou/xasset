@@ -43,10 +43,10 @@ public class CustomTest : MonoBehaviour
     private void OnUpdating(UpdatingInfo info)
     {
         string message = "更新中 : \r\n";
-        message += string.Format("Count: {0}/{1} -\r\n", info.TotalUpdateSuccessCount, info.TotalUpdateCount);
-        message += string.Format("Length: {0}/{1} -\r\n", info.TotalUpdateSuccessLength, info.TotalUpdateLength);
-        message += string.Format("Speed: {0} -\r\n", info.NetworkSpeed);
-        message += string.Format("Current Length: {0}/{1} -\r\n", info.CurrentSuccessLength, info.CurrentTotalLength);
+        message += string.Format("Count: {0}/{1} ", info.TotalUpdateSuccessCount, info.TotalUpdateCount);
+        message += string.Format("Length: {0}/{1} ", info.TotalUpdateSuccessLength, info.TotalUpdateLength);
+        message += string.Format("Speed: {0} ", info.NetworkSpeed);
+        message += string.Format("Current Length: {0}/{1} ", info.CurrentSuccessLength, info.CurrentTotalLength);
         message += string.Format("Current Progress: {0} ", info.CurrentProgress);
         Debug.Log(message);
     }

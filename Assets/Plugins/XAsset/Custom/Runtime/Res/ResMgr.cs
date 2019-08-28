@@ -8,7 +8,6 @@ using Object = UnityEngine.Object;
 using LoadType = Plugins.XAsset.LoadType;
 using UtilText = GameFramework.Utility.Text;
 
-
 /// <summary>
 /// 资源总管理器
 ///     user :使用者 
@@ -185,9 +184,10 @@ public class ResMgr : MonoBehaviour
             return;
         }
         state = State.Updateing;
+        onProgress += OnUpdateRes;
         updateControl.StartUpdateRes(() =>
         {
-            state = State.Completed;
+            OnUpdateSucceed();
             if (onSucceed != null)
             {
                 onSucceed.Invoke();
@@ -201,7 +201,10 @@ public class ResMgr : MonoBehaviour
                 onFailed.Invoke(err);
             }
         }, onProgress);
+
     }
+
+
 
     public void Clear()
     {
@@ -303,7 +306,7 @@ public class ResMgr : MonoBehaviour
             if (onCompleted != null)
             {
                 IRes res = new ResInfo(_asset);
-                onCompleted.Invoke(res); 
+                onCompleted.Invoke(res);
             }
         }
         else
@@ -337,7 +340,7 @@ public class ResMgr : MonoBehaviour
     #endregion
 
     #region ... Cache 
-    private const string DEFAULT_CACHE = "default"; 
+    private const string DEFAULT_CACHE = "default";
     private Dictionary<string, ResCacheGroup> groupDic = new Dictionary<string, ResCacheGroup>();
 
     private ResCacheGroup TryGetGroup(string groupName)
@@ -441,12 +444,33 @@ public class ResMgr : MonoBehaviour
 
     #endregion
 
+    #region ... Event
+
+    private void OnUpdateRes(UpdatingInfo info)
+    {
+        message = string.Format("Count: {0}/{1} \r\n", info.TotalUpdateSuccessCount, info.TotalUpdateCount);
+        message += string.Format("Length: {0}/{1} \r\n", info.TotalUpdateSuccessLength, info.TotalUpdateLength);
+        message += string.Format("Speed: {0} \r\n", info.NetworkSpeed);
+        message += string.Format("Current Length: {0}/{1} \r\n", info.CurrentSuccessLength, info.CurrentTotalLength);
+        message += string.Format("Current Progress: {0} ", info.CurrentProgress);
+    }
+
+    private void OnUpdateSucceed()
+    {
+        message = string.Empty;
+        state = State.Completed;
+    }
+
+    #endregion
+
     #region ... Test
     string message, assetPath;
 
     int curIndex;
     int current, _max = 8;
     bool isCheck;
+
+
     private void OnGUI()
     {
         if (isWindow)
@@ -480,15 +504,7 @@ public class ResMgr : MonoBehaviour
                     {
                         if (vinfo.IsUpdate)
                         {
-                            StartUpdateRes(null, (err) => { message = err; }, (uinfo) =>
-                            {
-                                message = "更新中 : \r\n";
-                                message += string.Format("Count: {0}/{1} -\r\n", uinfo.TotalUpdateSuccessCount, uinfo.TotalUpdateCount);
-                                message += string.Format("Length: {0}/{1} -\r\n", uinfo.TotalUpdateSuccessLength, uinfo.TotalUpdateLength);
-                                message += string.Format("Speed: {0} -\r\n", uinfo.NetworkSpeed);
-                                message += string.Format("Current Length: {0}/{1} -\r\n", uinfo.CurrentSuccessLength, uinfo.CurrentTotalLength);
-                                message += string.Format("Current Progress: {0} ", uinfo.CurrentProgress);
-                            });
+                            StartUpdateRes(null, (err) => { message = err; }, null);
                         }
                     }, (err) => { message = err; });
                 }

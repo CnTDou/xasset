@@ -25,9 +25,9 @@ namespace Plugins.XAsset
         private long _updateSuccessLength = 0;
 
         public UpdateControl()
-        { 
+        {
         }
-         
+
         /// <summary>
         /// 检查版本
         /// </summary>
@@ -101,14 +101,14 @@ namespace Plugins.XAsset
                     {
                         if (_onUpdateFailed != null)
                         {
-                            _onUpdateFailed.Invoke(_download.error);
+                            _onUpdateFailed.Invoke(string.Format("download fail , url: {0}, error: {1}", _download.url, _download.error));
                             _onUpdateFailed = null;
                         }
                         _isDownload = false;
                         return;
                     }
                     _updatingInfo.Fill(_download.len, _download.maxlen, _download.progress);
-
+                    Debug.LogFormat("{0} , {1} , {2}", _download.url, _download.state, _download.isDone);
                     if (_download.isDone)
                     {
                         _updateSuccessLength += _download.len;
@@ -117,13 +117,18 @@ namespace Plugins.XAsset
                     }
                 }
 
-                _updatingInfo .Fill(_updateSuccessLength, _downloadCompletes.Count);
+                _updatingInfo.Fill(_updateSuccessLength, _downloadCompletes.Count);
 
                 if (_waltDownloadQueue.Count == 0 && _download == null)
                 {
                     _isDownload = false;
 
                     Complete();
+                }
+                else
+                {
+                    if (_onProgress != null)
+                        _onProgress.Invoke(_updatingInfo);
                 }
             }
         }
