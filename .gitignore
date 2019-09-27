@@ -40,3 +40,4 @@ UnityPackageManager
 *.mdb
 
 _ReSharper.Caches
+.idea/
