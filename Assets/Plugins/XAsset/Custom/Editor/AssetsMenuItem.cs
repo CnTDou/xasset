@@ -19,29 +19,29 @@ namespace Plugins.XAsset.Editor
             AssetDatabase.SaveAssets();
         }
 
-        [MenuItem("Tools/AssetBundles/生成 Package 配置 [根据Rule文件]", false, 21)]
-        public static void _BuildManifestByRule()
-        {
-            _BuildManifest(BuildType.Package);
-        }
+        //[MenuItem("Tools/AssetBundles/生成 Package 配置 [根据Rule文件]", false, 21)]
+        //public static void _BuildManifestByRule()
+        //{
+        //    _BuildManifest(BuildType.Package);
+        //}
 
-        [MenuItem("Tools/AssetBundles/生成 Network 配置 [根据Rule文件]", false, 22)]
-        public static void _BuildNetworkManifestByRule()
-        {
-            _BuildManifest(BuildType.Network);
-        }
+        //[MenuItem("Tools/AssetBundles/生成 Network 配置 [根据Rule文件]", false, 22)]
+        //public static void _BuildNetworkManifestByRule()
+        //{
+        //    _BuildManifest(BuildType.Network);
+        //}
 
-        [MenuItem(@"Tools/AssetBundles/生成 Package 资源包", false, 23)]
-        public static void BuildPackage()
-        {
-            _BuildManifestByRule();
-            BuildAssetBundles();
-        }
+        //[MenuItem(@"Tools/AssetBundles/生成 Package 资源包", false, 23)]
+        //public static void BuildPackage()
+        //{
+        //    //_BuildManifestByRule();
+        //    BuildAssetBundles();
+        //}
 
         [MenuItem(@"Tools/AssetBundles/生成 Package 资源包 并 Copy to StreamingAssets", false, 24)]
         public static void BuildPackageAndCopy()
         {
-            _BuildManifestByRule();
+            //_BuildManifestByRule();
             BuildAssetBundles();
             CopyAssetBundles();
         }
@@ -49,7 +49,7 @@ namespace Plugins.XAsset.Editor
         [MenuItem("Tools/AssetBundles/生成 Network 资源包 并 上传", false, 25)]
         public static void BuildNetwork()
         {
-            _BuildNetworkManifestByRule();
+            //_BuildNetworkManifestByRule();
             BuildAssetBundles();
             UploadAssetBundles();
         }
@@ -72,34 +72,36 @@ namespace Plugins.XAsset.Editor
             assetsManifest.assets = new AssetData[0];
             assetsManifest.dirs = new string[0];
             assetsManifest.bundles = new string[0];
-
+            string[] ignores = manifestRule.ignorePaths.ToArray();
             int number = 0;
             for (int i = 0; i < manifestRule.ruleInfos.Count; i++)
             {
                 var ruleInfo = manifestRule.ruleInfos[i];
                 var path = ruleInfo.path;
-
                 EditorUtility.DisplayCancelableProgressBar("Build Manifest", path, i * 1f / manifestRule.ruleInfos.Count);
-
-                if (ruleInfo.buildType != buildType)
+                 
+                if (ruleInfo.buildType != buildType|| IsIgnore(path, ignores))
                 {
                     continue;
                 }
                 number++;
-
+                if(!path.EndsWith("/")|| !path.EndsWith(@"\"))
+                {
+                    path += "/";
+                }
                 switch (ruleInfo.ruleType)
                 {
-                    case RuleType.RootDir:
-                        SetAssetsWithDir(path, assetsManifest, true);
+                    case RuleType.RootDir: 
+                        SetAssetsWithDir(path, ignores, assetsManifest, true);
                         break;
                     case RuleType.Dir:
-                        SetAssetsWithDir(path, assetsManifest, false);
+                        SetAssetsWithDir(path, ignores, assetsManifest, false);
                         break;
                     case RuleType.File:
-                        SetAssetsWithFile(path, assetsManifest);
+                        SetAssetsWithFile(path, ignores, assetsManifest);
                         break;
                     case RuleType.FileName:
-                        SetAssetsWithName(path, assetsManifest);
+                        SetAssetsWithName(path, ignores, assetsManifest);
                         break;
                     default:
                         break;
@@ -115,7 +117,7 @@ namespace Plugins.XAsset.Editor
                 assetsManifest.assets.Length, assetsManifest.bundles.Length);
         }
 
-        private static void SetAssetsWithDir(string path, AssetsManifest assetsManifest, bool isRootDir)
+        private static void SetAssetsWithDir(string path, string[]ignores, AssetsManifest assetsManifest,   bool isRootDir)
         {
             List<FileInfo> fileInfos = Util.GetFileInfoByFolder(path, SearchOption.AllDirectories);
             var assetBundleName = TrimedAssetBundleName(Path.GetDirectoryName(path).Replace("\\", "/")) + "_g";
@@ -125,20 +127,24 @@ namespace Plugins.XAsset.Editor
                 path = Util.GetUnityAssetPath(fileInfos[i].FullName);
                 if (Directory.Exists(path) || path.EndsWith(".cs", System.StringComparison.CurrentCulture))
                     continue;
+                if (IsIgnore(path, ignores))
+                    continue;
                 if (!isRootDir)
                     assetBundleName = TrimedAssetBundleName(Path.GetDirectoryName(path).Replace("\\", "/")) + "_g";
                 BuildScript.SetAssetBundleNameAndVariant(path, assetBundleName.ToLower(), null, assetsManifest);
             }
         }
 
-        private static void SetAssetsWithFile(string path, AssetsManifest assetsManifest)
+        private static void SetAssetsWithFile(string path, string[] ignores, AssetsManifest assetsManifest)
         {
             List<FileInfo> fileInfos = Util.GetFileInfoByFolder(path, SearchOption.AllDirectories);
 
             for (int i = 0; i < fileInfos.Count; i++)
             {
-                path = Util.GetUnityAssetPath(fileInfos[i].FullName);
+                path = Util.GetUnityAssetPath(fileInfos[i].FullName); 
                 if (Directory.Exists(path) || path.EndsWith(".cs", System.StringComparison.CurrentCulture))
+                    continue;
+                if (IsIgnore(path, ignores))
                     continue;
                 var dir = Path.GetDirectoryName(path);
                 var name = Path.GetFileNameWithoutExtension(path);
@@ -153,7 +159,7 @@ namespace Plugins.XAsset.Editor
             }
         }
 
-        private static void SetAssetsWithName(string path, AssetsManifest assetsManifest)
+        private static void SetAssetsWithName(string path, string[] ignores, AssetsManifest assetsManifest)
         {
             List<FileInfo> fileInfos = Util.GetFileInfoByFolder(path, SearchOption.AllDirectories);
 
@@ -161,6 +167,8 @@ namespace Plugins.XAsset.Editor
             {
                 path = Util.GetUnityAssetPath(fileInfos[i].FullName);
                 if (Directory.Exists(path) || path.EndsWith(".cs", System.StringComparison.CurrentCulture))
+                    continue;
+                if (IsIgnore(path, ignores))
                     continue;
                 var assetBundleName = Path.GetFileNameWithoutExtension(path);
                 BuildScript.SetAssetBundleNameAndVariant(path, assetBundleName.ToLower(), null, assetsManifest);
@@ -173,5 +181,21 @@ namespace Plugins.XAsset.Editor
             // todo: 上传操作
         }
 
+
+        static bool IsIgnore(string path, string[] ignores)
+        {
+            for (int i = 0; i < ignores.Length; i++)
+            {
+                if (path.Contains(ignores[i]))
+                    return true;
+            }
+            return false;
+        }
     }
 }
+
+
+/*
+    bundleName,checkRootPath
+    assets/textures/actors/all,Assets/Textures/Actors/ 
+ */

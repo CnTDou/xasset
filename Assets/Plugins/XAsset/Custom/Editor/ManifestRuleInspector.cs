@@ -39,7 +39,7 @@ namespace Plugins.XAsset.Editor
             unAddFolderOrFiles.Clear();
             GetSubFolder(fullAssetRoot, ref unAddFolderOrFiles);
 
-            Util.GetSubFile(fullAssetRoot, ref unAddFolderOrFiles, (p) =>
+            Util.GetSubPath(fullAssetRoot, ref unAddFolderOrFiles, (p) =>
             {
                 if (t.ignorePaths.Exists((o) => { return o == p; }))
                 {
@@ -55,7 +55,7 @@ namespace Plugins.XAsset.Editor
 
         private void GetSubFolder(string folder, ref List<string> list)
         {
-            Util.GetSubFolder(folder, ref list, (p) =>
+            Util.GetSubPath(folder, ref list, (p) =>
             {
                 if (t.ignorePaths.Exists((o) => { return o == p; }))
                 {
@@ -250,17 +250,14 @@ namespace Plugins.XAsset.Editor
                     {
                         addRulePath = AssetRoot;
                     }
-                    if (addRulePath != AssetRoot)
+                    if (GUILayout.Button("Add Rule Path"))
                     {
-                        if (GUILayout.Button("Add Rule Path"))
+                        isChanged = true;
+                        if (!t.ruleInfos.Exists((p) => { return p.path == addRulePath; }))
                         {
-                            isChanged = true;
-                            if (!t.ruleInfos.Exists((p) => { return p.path == addRulePath; }))
-                            {
-                                t.ruleInfos.Add(new RuleInfo() { path = addRulePath });
-                            }
-                            addRulePath = AssetRoot;
+                            t.ruleInfos.Add(new RuleInfo() { path = addRulePath });
                         }
+                        addRulePath = AssetRoot;
                     }
 
                     EditorGUI.indentLevel--;
@@ -308,7 +305,13 @@ namespace Plugins.XAsset.Editor
                                         t.RemoveRule(value.path);
                                         break;
                                     }
-
+                                    if (GUILayout.Button("Add Ignore"))
+                                    {
+                                        isChanged = true;
+                                        t.RemoveRule(value.path);
+                                        t.AddIgnore(value.path);
+                                        break;
+                                    }
                                     DrawSubDir(value.path);
 
                                 }
@@ -372,7 +375,18 @@ namespace Plugins.XAsset.Editor
 
                                 list.ForEach((_path) =>
                                 {
-                                    EditorGUILayout.LabelField(_path);
+
+                                    EditorGUILayout.BeginHorizontal();
+                                    {
+                                        EditorGUILayout.LabelField(_path);
+                                        if (GUILayout.Button("Add Ignore"))
+                                        {
+                                            isChanged = true;
+                                            t.AddIgnore(_path);
+                                        }
+                                    }
+                                    EditorGUILayout.EndHorizontal();
+                                
                                 });
                             }
                         }

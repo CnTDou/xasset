@@ -13,37 +13,61 @@ namespace Plugins.XAsset
 
         private int loadingCount;
         private bool isDone;
-        Dictionary<string, IRes> readyDic = new Dictionary<string, IRes>();
+        Dictionary<string, IResInfo> readyDic = new Dictionary<string, IResInfo>();
         Queue<LoadParam> waitLoadAsset = new Queue<LoadParam>();
 
         /// <summary>
         /// 是否完成
         /// </summary>
-        public bool IsDone { get { return isDone; } }
+        public bool IsDone
+        {
+            get { return isDone; }
+        }
+
         /// <summary>
         /// 已经加载完成数量
         /// </summary>
-        public int ReadyCount { get { return readyDic.Count; } }
+        public int ReadyCount
+        {
+            get { return readyDic.Count; }
+        }
+
         /// <summary>
         /// 等待加载数量
         /// </summary>
-        public int WaitLoadCount { get { return waitLoadAsset.Count; } }
+        public int WaitLoadCount
+        {
+            get { return waitLoadAsset.Count; }
+        }
+
         /// <summary>
         /// 当前正在加载的数量
         /// </summary>
-        public int LoadingCount { get { return loadingCount; } }
+        public int LoadingCount
+        {
+            get { return loadingCount; }
+        }
 
         /// <summary>
         /// 最大同时加载数量 =0则不作限制
         /// </summary>
         public int MaxLoadingCount { set; get; }
 
-        public void Add(LoadParam loadParam, Action onComplete, LoadingCache onLoadingCache = null)
+        /// <summary>
+        /// 添加加载
+        /// </summary>
+        /// <param name="loadParam"></param> 
+        /// <param name="onComplete"></param>
+        public void Add(LoadParam loadParam, Action onComplete)
         {
-            waitLoadAsset.Enqueue(loadParam);
-            _onLoadComplete += onComplete;
-            if (onLoadingCache != null)
-                _onLoadingCache += onLoadingCache;
+            Load(loadParam.fullPath, loadParam.assetType, loadParam.isInstant,
+                () =>
+                {
+                    if (onComplete != null)
+                    {
+                        onComplete.Invoke();
+                    }
+                });
         }
 
         public void Add(LoadParam[] loadParams, Action onComplete, LoadingCache onLoadingCache = null)
@@ -52,6 +76,7 @@ namespace Plugins.XAsset
             {
                 waitLoadAsset.Enqueue(loadParams[i]);
             }
+
             _onLoadComplete += onComplete;
             if (onLoadingCache != null)
                 _onLoadingCache += onLoadingCache;
@@ -64,6 +89,7 @@ namespace Plugins.XAsset
                 item.Value.Dequire(gameObject);
                 item.Value.Release();
             }
+
             readyDic.Clear();
         }
 
@@ -73,12 +99,19 @@ namespace Plugins.XAsset
 
             if (waitLoadAsset.Count > 0)
             {
-                if(MaxLoadingCount==0|| loadingCount < MaxLoadingCount)
+                if (MaxLoadingCount == 0 || loadingCount < MaxLoadingCount)
                 {
-                    Load(waitLoadAsset.Dequeue()); 
+                    var loadParam = waitLoadAsset.Dequeue();
+                    Load(loadParam.fullPath, loadParam.assetType, loadParam.isInstant, () =>
+                    {
+                        if (_onLoadingCache != null)
+                        {
+                            _onLoadingCache.Invoke(ReadyCount, ReadyCount + WaitLoadCount + LoadingCount);
+                        }
+                    });
                 }
             }
-             
+
             if (isDone)
             {
                 _onLoadingCache = null;
@@ -88,38 +121,40 @@ namespace Plugins.XAsset
                     _onLoadComplete = null;
                 }
             }
-
         }
 
-        private void Load(LoadParam loadParam)
+        private void Load(string fullPath, Type assetType, bool isInstant, Action onColplete)
         {
             loadingCount++;
-            ResMgr.Instance.LoadAsync(loadParam.fullPath, typeof(Object), (res) =>
+            ResMgr.Instance.LoadAsync(fullPath, assetType, (res) =>
             {
                 loadingCount--;
-                AddReady(res);
-                if (loadParam.isInstant && res.Asset)
+                if (res != null && res.Asset)
                 {
-                    if (res.Asset is GameObject)
+                    AddReady(res);
+                    if (isInstant)
                     {
-                        var obj = GameObject.Instantiate(res.Asset as GameObject); // 去老远老远地方 自个玩去 别影响显示 
-                        obj.transform.localScale = Vector3.zero;
-                        res.Require(obj);
-                        GameObject.Destroy(obj, Time.deltaTime);
+                        if (res.Asset is GameObject)
+                        {
+                            var obj = GameObject.Instantiate(
+                                res.Asset as GameObject); // 实例化一下,防止除此显示延迟 卡顿等等 去老远老远地方 自个玩去 别影响显示 
+                            obj.transform.localScale = Vector3.zero;
+                            res.Require(obj);
+                            GameObject.Destroy(obj, Time.deltaTime);
+                        }
+
+                        // other ...
                     }
-
-                    // other ...
-
                 }
-
-                if (_onLoadingCache != null)
+ 
+                if (onColplete != null)
                 {
-                    _onLoadingCache.Invoke(ReadyCount, ReadyCount + WaitLoadCount + LoadingCount);
+                    onColplete();
                 }
             });
         }
 
-        public void AddReady(IRes res)
+        public void AddReady(IResInfo res)
         {
             if (!readyDic.ContainsKey(res.Name))
             {
@@ -130,16 +165,16 @@ namespace Plugins.XAsset
 
         public Object Get(string fullPath, Object user)
         {
-            IRes res;
+            IResInfo res;
             if (readyDic.TryGetValue(fullPath, out res))
             {
                 res.Require(user);
                 return res.Asset;
             }
-            ResMgr.OutLog("res error ResCacheGroup.Get, path: {0} , user: {1} , groupName: {2} .", fullPath, user, name);
+
+//            Util.Log("res warn ResCacheGroup.Get, path: {0} , user: {1} , groupName: {2} .", fullPath, user, name);
             return null;
         }
-
     }
 
     /// <summary>

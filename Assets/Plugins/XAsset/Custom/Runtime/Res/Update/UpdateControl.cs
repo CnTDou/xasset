@@ -189,7 +189,7 @@ namespace Plugins.XAsset
                     _onProgress = null;
                 });
                 string message = string.Format("{0} files has update.", _downloadCompletes.Count);
-                ResMgr.OutLog(message);
+                Util.Log(message);
                 return;
             }
 
@@ -200,7 +200,7 @@ namespace Plugins.XAsset
             }
             _onUpdateFailed = null;
             _onProgress = null;
-            ResMgr.OutLog("nothing to update.");
+            Util.Log("nothing to update.");
         }
 
         public void StartUpdateRes(Action onSucceed, Action<string> onFailed, Action<UpdatingInfo> onProgress)

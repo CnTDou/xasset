@@ -6,7 +6,7 @@ namespace Plugins.XAsset
 {
     public class ResListening : MonoBehaviour
     {
-        Dictionary<string, IRes> assetDic = new Dictionary<string, IRes>();
+        Dictionary<string, IResInfo> assetDic = new Dictionary<string, IResInfo>();
         private void OnDestroy()
         {
             foreach (var item in assetDic)
@@ -16,11 +16,11 @@ namespace Plugins.XAsset
             assetDic.Clear();
         }
 
-        public static void Add(GameObject go, IRes res)
+        public static void Add(GameObject go, IResInfo res)
         {
             if (string.IsNullOrEmpty(res.Name))
             {
-                ResMgr.OutLog("res error ResListening, res.Name: {0}, res.Asset: {1}.", res.Name, res.Asset);
+                Util.Log("res error ResListening, res.Name: {0}, res.Asset: {1}.", res.Name, res.Asset);
                 return;
             }
             ResListening resListening = go.GetComponent<ResListening>();

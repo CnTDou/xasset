@@ -3,96 +3,63 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface IRes
+namespace Plugins.XAsset
 {
-    /// <summary>
-    /// 直接获取资源
-    /// </summary>
-    Object Asset { get; }
-    string Name { get; }
-
-    /// <summary>
-    /// 引用数量
-    /// </summary>
-    int RefCount { get; }
-     
-    /// <summary>
-    /// 引用对象
-    ///     计数++
-    /// </summary>
-    /// <param name="user"></param>
-    void Require(Object user);
-
-    /// <summary>
-    /// 归还对象
-    ///     计数--
-    /// </summary>
-    /// <param name="user"></param>
-    void Dequire(Object user);
-
-    /// <summary>
-    /// 释放一个引用
-    /// </summary>
-    void Release();
-     
-}
-
-public class ResInfo : IRes
-{
-    Asset asset;
-
-    public ResInfo(Asset _asset)
+    public class ResInfo : IResInfo
     {
-        asset = _asset;
-    }
+        Asset asset;
 
-    public Object Asset
-    {
-        get
+        public ResInfo(string _err)
         {
-            return asset != null ? asset.asset : null;
+            error = _err;
         }
-    }
 
-    public string Name
-    {
-        get
+        public ResInfo(Asset _asset)
         {
-            return asset != null ? asset.name : string.Empty;
+            asset = _asset;
         }
-    }
 
-    public int RefCount
-    {
-        get
+        public Object Asset
         {
-            return asset != null ? asset.refCount : 0;
+            get { return asset != null ? asset.asset : null; }
         }
-    }
-     
-    /// <summary>
-    /// 引用对象
-    /// </summary>
-    /// <param name="user"></param>
-    public void Require(Object user)
-    {
-        if (asset != null)
-            asset.Require(user);
-    }
 
-    /// <summary>
-    /// 归还对象
-    /// </summary>
-    /// <param name="user"></param>
-    public void Dequire(Object user)
-    {
-        if (asset != null)
-            asset.Dequire(user); 
-    }
+        public string Name
+        {
+            get { return asset != null ? asset.name : string.Empty; }
+        }
 
-    public void Release()
-    {
-        if (asset != null)
-            asset.Release();
+        public int RefCount
+        {
+            get { return asset != null ? asset.refCount : 0; }
+        }
+
+        /// <summary>
+        /// 引用对象
+        /// </summary>
+        /// <param name="user"></param>
+        public void Require(Object user)
+        {
+            if (asset != null)
+                asset.Require(user);
+        }
+
+        /// <summary>
+        /// 归还对象
+        /// </summary>
+        /// <param name="user"></param>
+        public void Dequire(Object user)
+        {
+            if (asset != null)
+                asset.Dequire(user);
+        }
+
+        public void Release()
+        {
+            if (asset != null)
+                asset.Release();
+        }
+
+        public string error { get; private set; }
     }
 }

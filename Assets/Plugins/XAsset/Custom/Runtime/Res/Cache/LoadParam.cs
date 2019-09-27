@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine; 
+using UnityEngine;
 using Object = UnityEngine.Object;
 using LoadType = Plugins.XAsset.LoadType;
 using UtilText = GameFramework.Utility.Text;
@@ -11,21 +11,28 @@ namespace Plugins.XAsset
 {
     public class LoadParam
     {
+        /// <summary>
+        /// 完整路径
+        /// </summary>
         public string fullPath;
-        public Type assetType;
-        public bool isInstant;
 
-        public LoadParam(string _path, LoadType loadType)
+        /// <summary>
+        /// 加载类型
+        /// </summary>
+        public Type assetType = typeof(Object);
+
+        /// <summary>
+        /// 是否实例化
+        /// </summary>
+        public bool isInstant = false;
+
+        public LoadParam()
         {
-            fullPath = UtilText.Format("{0}{1}.{2}", ResMgr.RES_ROOT_PATH, _path, ResMgr.GetSuffix(loadType));
-            assetType = ResMgr.GetType(loadType);
         }
 
-        public LoadParam(string _pathAndSuffix)
+        public LoadParam(string path, LoadType loadType)
         {
-            fullPath = UtilText.Format("{0}{1}", ResMgr.RES_ROOT_PATH, _pathAndSuffix);
-            assetType = ResMgr.GetType(LoadType.NONE);
+            fullPath = ResExtend.GetFullPath(path, loadType);
         }
-
     }
 }

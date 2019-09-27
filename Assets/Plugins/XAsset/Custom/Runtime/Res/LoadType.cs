@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace Plugins.XAsset
-{
+{ 
     public enum LoadType
     {
         NONE,
@@ -20,5 +20,6 @@ namespace Plugins.XAsset
         ANIMATION_CLIP,
         SCENE,
     }
+
 
 }

@@ -50,7 +50,7 @@ namespace Plugins.XAsset.Editor
                 EditorGUILayout.LabelField("Max Loading Count : " + t.MaxLoadingCount);
 
 
-                DrawDictionary("ResMgr.groupDic ", Util.GetPrivateField<Dictionary<string, IRes>>(t, "readyDic"));
+                DrawDictionary("ResMgr.groupDic ", Util.GetPrivateField<Dictionary<string, IResInfo>>(t, "readyDic"));
 
             }
             EditorGUILayout.EndVertical();
