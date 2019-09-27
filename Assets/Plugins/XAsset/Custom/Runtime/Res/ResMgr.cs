@@ -135,8 +135,8 @@ public class ResMgr : MonoBehaviour
     public bool isCheckBundle = false;
     public bool isWindow = false;
     [SerializeField] private State state = State.Wait;
-    public UpdateControl updateControl = new UpdateControl();
-    private CacheControl cacheControl = new CacheControl();
+    public UpdateControl updateControl = new UpdateControl(); 
+    private ResLoading _resLoading;
 
 
     public State GetState
@@ -154,6 +154,8 @@ public class ResMgr : MonoBehaviour
                 resDebug = gameObject.AddComponent<ResDebug>();
             }
         }
+
+        _resLoading = ResLoading.Get(gameObject);
     }
 
     private void Update()
@@ -177,6 +179,8 @@ public class ResMgr : MonoBehaviour
 
         updateControl.Update();
     }
+
+    #region ... API
 
     /// <summary>
     /// 初始化
@@ -286,43 +290,30 @@ public class ResMgr : MonoBehaviour
         updateControl.Clear();
     }
 
+    #endregion
+
+
     #region ... Asset
 
     public void LoadAsync<T>(string fullPath, Object user, Action<T> callback)
         where T : Object
     {
-        LoadAsync(fullPath, Util.GetType(LoadType.NONE), (res) =>
-        {
-            if (string.IsNullOrEmpty(res.error) && res.Asset)
+        LoadAsync (fullPath, typeof(T),(asset) =>
+        { 
+            asset.Require(user);
+            if (callback != null)
             {
-                res.Require(user);
-                if (callback != null)
-                {
-                    callback(res.Asset as T);
-                }
+                callback(asset.Obj as T);
+            }
+        }, (asset) =>
+        {
+            if (callback != null)
+            {
+                callback(null);
             }
         });
     }
-
-    /// <summary>
-    /// 异步加载
-    ///     路径.后缀
-    /// </summary>
-    /// <param name="_path">路径.后缀</param>
-    /// <param name="type"></param>
-    /// <param name="onCompleted"></param> 
-    /// <param name="user"></param>
-    public void LoadAsync<T>(string fullPath, Action<IResInfo> onSucceed) where T : Object
-    {
-        LoadAsync(fullPath, typeof(T), (res) =>
-        {
-            if (onSucceed != null)
-            {
-                onSucceed.Invoke(res);
-            }
-        });
-    }
-
+ 
     /// <summary>
     /// 异步加载 [注意:使用]
     ///     注意此方法需要完成路径  路径.后缀
@@ -331,7 +322,7 @@ public class ResMgr : MonoBehaviour
     /// <param name="type"></param>
     /// <param name="onCompleted"></param> 
     /// <param name="user"></param>
-    public void LoadAsync(string fullPath, Type loadType, Action<IResInfo> onCompleted)
+    public void LoadAsync(string fullPath, Type loadType, Action<IResInfo> onSucceed, Action<IResInfo> onFailed)
     {
         if (state != State.Completed)
         {
@@ -339,32 +330,7 @@ public class ResMgr : MonoBehaviour
             return;
         }
 
-        Asset asset = Assets.LoadAsync(fullPath, loadType);
-        asset.completed += (_asset) => { OnLoadComplete(fullPath, onCompleted, _asset); };
-    }
-
-    private void OnLoadComplete(string fullPath, Action<IResInfo> onCompleted, Asset _asset)
-    {
-        if (string.IsNullOrEmpty(_asset.error) && _asset.asset)
-        {
-            if (onCompleted != null)
-            {
-                IResInfo res = new ResInfo(_asset);
-                onCompleted.Invoke(res);
-            }
-        }
-        else
-        {
-            string err = string.Format(
-                "res error RES.LoadAsync, fullPath: {0} , type: {1} , asset: {2} , error message: {3}.",
-                fullPath, _asset.assetType, _asset.asset, _asset.error);
-            if (onCompleted != null)
-            {
-                onCompleted.Invoke(new ResInfo(err));
-            }
-
-            Util.Log(err);
-        }
+        _resLoading.LoadAsync(fullPath,loadType,onSucceed,onFailed);  
     }
 
     #endregion
@@ -387,43 +353,7 @@ public class ResMgr : MonoBehaviour
     }
 
     #endregion
-
-    #region ... Cache 
-
-    /// <summary>
-    /// 加载并添加缓存
-    /// </summary>
-    /// <param name="loadParams"></param>
-    /// <param name="user">当传入空包对象,加载成功/失败回调null ,当不为空时 加载成功返回对象</param>
-    /// <param name="onComplete"></param>
-    /// <param name="groupName"></param>
-    public void LoadCache(LoadParam loadParams, Object user, Action<Object> onComplete,
-        string groupName = Constnat.DEFAULT_CACHE)
-    {
-        cacheControl.LoadCache(loadParams, user, onComplete, groupName);
-    }
-
-    public void LoadCache(LoadParam[] loadParams, Action onComplete, LoadingCache onLoading,
-        string groupName = Constnat.DEFAULT_CACHE)
-    {
-        cacheControl.LoadCache(loadParams, onComplete, onLoading, groupName);
-    }
-
-    public void UnloadCache(string groupName = Constnat.DEFAULT_CACHE)
-    {
-        cacheControl.UnloadCache(groupName);
-    }
-
-    public T GetCache<T>(string fullPath, Object user, string groupName = Constnat.DEFAULT_CACHE)
-        where T : Object
-    {
-        return cacheControl.GetCache<T>(fullPath, user, groupName);
-    }
-
-    #endregion
-
-    #region ... Event
-
+  
     private void OnUpdateingRes(UpdatingInfo info)
     {
         string message = string.Format("Count: {0}/{1} \r\n", info.TotalUpdateSuccessCount, info.TotalUpdateCount);
@@ -433,103 +363,45 @@ public class ResMgr : MonoBehaviour
         message += string.Format("Current Progress: {0} ", info.CurrentProgress);
     }
 
-    #endregion
-}
+    #region ... Asset
 
+    private Dictionary<string, Asset> cacheAssetDic = new Dictionary<string, Asset>();
+    private List<string> tUnloadList = new List<string>();
 
-public interface IResCache
-{
-    /// <summary>
-    /// 是否所有已完成
-    /// </summary>
-    bool IsDone { get; }
-
-    /// <summary>
-    /// 当前加载进度
-    /// </summary>
-    float Progress { get; }
-
-    /// <summary>
-    /// 准备就绪数量
-    /// </summary>
-    int ReadyCount { get; }
-
-    /// <summary>
-    /// 加载中数量
-    /// </summary>
-    int LoadingCount { get; }
-
-    void AddCache(string path, Type assetType);
-
-    Object Get<T>(string path, Object user) where T : Object;
-
-    void Clear();
-}
-
-public class ResCache : MonoBehaviour, IResCache
-{
-    public int ReadyCount
-    {
-        get { return cacheDic.Count; }
-    }
-
-    public int LoadingCount
-    {
-        get { return loadingCount; }
-    }
-
-    public bool IsDone
-    {
-        get { return LoadingCount == 0; }
-    }
-
-    public float Progress
-    {
-        get { return (100f / (ReadyCount + LoadingCount)) * ReadyCount; }
-    }
-
-    int loadingCount;
-    Dictionary<string, IResInfo> cacheDic = new Dictionary<string, IResInfo>();
-
-    public void AddCache(string path, Type assetType)
-    {
-        if (cacheDic.ContainsKey(path))
+    public Asset TryGet(string path)
+    { 
+        Asset asset;
+        if (!cacheAssetDic.TryGetValue(path, out asset))
         {
-            return;
-        }
+            asset = Assets.LoadAsync(path, typeof(Object));
+            asset.Require(this);
+            cacheAssetDic.Add(path, asset);
+        } 
+        return asset;
+    }
 
-        loadingCount++;
-        ResMgr.Instance.LoadAsync(path, assetType, (res) =>
+    private void CheckUnloadAsset()
+    {
+        tUnloadList.Clear();
+        foreach (var item in cacheAssetDic)
         {
-            loadingCount--;
-            if (string.IsNullOrEmpty(res.error) && res.Asset)
+            if (item.Value.refCount == 1)
             {
-                // ... obj
-                res.Require(this);
-                cacheDic.Add(path, res);
+                item.Value.Dequire(this);
+                tUnloadList.Add(item.Key);
             }
-        });
-    }
-
-    public Object Get<T>(string path, Object user) where T : Object
-    {
-        IResInfo res;
-        if (cacheDic.TryGetValue(path, out res))
-        {
-            res.Require(user);
-            return res.Asset as T;
         }
 
-        return null;
+        if (tUnloadList.Count > 0)
+        {
+            tUnloadList.ForEach((key) => { cacheAssetDic.Remove(key); });
+        }
     }
 
-    public void Clear()
+    #endregion
+ 
+    public static ResLoading GetResLoading(Object user)
     {
-        foreach (var item in cacheDic)
-        {
-            item.Value.Dequire(this);
-        }
-
-        cacheDic.Clear();
+        return ResLoading.Get(user);
     }
 }

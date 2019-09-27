@@ -1,17 +1,30 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Plugins.XAsset
-{
-    public interface IResInfo
+{ 
+    public interface IResInfo : IQuote
     {
         /// <summary>
         /// 直接获取资源
         /// </summary>
-        Object Asset { get; }
-        string Name { get; }
+        Object Obj { get; }
 
+        string Name { get; }
+        
+        string Error { get; }
+
+        bool IsDone { get; }
+ 
+        ResInfoState State { get; }
+ 
+        event Action<Asset> completed;
+    }
+ 
+    public interface IQuote
+    {
         /// <summary>
         /// 引用数量
         /// </summary>
@@ -35,8 +48,5 @@ namespace Plugins.XAsset
         /// 释放一个引用
         /// </summary>
         void Release();
-
-       string error { get; }
     }
-
 }

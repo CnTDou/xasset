@@ -3,6 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public interface ILoading
+{
+    float Progress { get; }
+    
+    bool IsDone { get; }
+    
+    string Error { get; }
+}
 
 /// <summary>
 /// 进度控制器 

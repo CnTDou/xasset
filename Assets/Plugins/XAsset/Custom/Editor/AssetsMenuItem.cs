@@ -11,11 +11,11 @@ namespace Plugins.XAsset.Editor
     public static partial class AssetsMenuItem
     {
         [MenuItem("Tools/AssetBundles/创建所需要配置", false, 20)]
-        public static void CreateConfig()
+        public static void CreateConfig() 
         {
             EditorUtility.SetDirty(BuildScript.GetSettings());
             EditorUtility.SetDirty(BuildScript.GetManifest());
-            EditorUtility.SetDirty(BuildScript.GetAsset<ManifestRule>(Constnat.ManifestRulePath));
+//            EditorUtility.SetDirty(BuildScript.GetAsset<ManifestRule>(Constnat.ManifestRulePath));
             AssetDatabase.SaveAssets();
         }
 
@@ -55,67 +55,67 @@ namespace Plugins.XAsset.Editor
         }
 
 
-        private static void _BuildManifest(BuildType buildType)
-        {
-            EditorUtility.DisplayProgressBar("Build Manifest", "Start", 0f);
-
-            Settings settings = BuildScript.GetSettings();
-            string assetRootPath = settings.assetRootPath;
-            AssetsManifest assetsManifest = BuildScript.GetManifest();
-            EditorUtility.DisplayProgressBar("Build Manifest", "Read ManifestRule", 0f);
-            ManifestRule manifestRule = BuildScript.GetAsset<ManifestRule>(Constnat.ManifestRulePath);
-            EditorUtility.DisplayProgressBar("Build Manifest", "Read ManifestRule", 1f);
-
-            if (string.IsNullOrEmpty(assetsManifest.downloadURL))
-                assetsManifest.downloadURL = BuildScript.GetServerURL();
-
-            assetsManifest.assets = new AssetData[0];
-            assetsManifest.dirs = new string[0];
-            assetsManifest.bundles = new string[0];
-            string[] ignores = manifestRule.ignorePaths.ToArray();
-            int number = 0;
-            for (int i = 0; i < manifestRule.ruleInfos.Count; i++)
-            {
-                var ruleInfo = manifestRule.ruleInfos[i];
-                var path = ruleInfo.path;
-                EditorUtility.DisplayCancelableProgressBar("Build Manifest", path, i * 1f / manifestRule.ruleInfos.Count);
-                 
-                if (ruleInfo.buildType != buildType|| IsIgnore(path, ignores))
-                {
-                    continue;
-                }
-                number++;
-                if(!path.EndsWith("/")|| !path.EndsWith(@"\"))
-                {
-                    path += "/";
-                }
-                switch (ruleInfo.ruleType)
-                {
-                    case RuleType.RootDir: 
-                        SetAssetsWithDir(path, ignores, assetsManifest, true);
-                        break;
-                    case RuleType.Dir:
-                        SetAssetsWithDir(path, ignores, assetsManifest, false);
-                        break;
-                    case RuleType.File:
-                        SetAssetsWithFile(path, ignores, assetsManifest);
-                        break;
-                    case RuleType.FileName:
-                        SetAssetsWithName(path, ignores, assetsManifest);
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            EditorUtility.ClearProgressBar();
-
-            EditorUtility.SetDirty(assetsManifest);
-            AssetDatabase.SaveAssets();
-
-            Debug.LogFormat("build manifest complete , assets count : {0} , bundles count : {1} .",
-                assetsManifest.assets.Length, assetsManifest.bundles.Length);
-        }
+//        private static void _BuildManifest(BuildType buildType)
+//        {
+//            EditorUtility.DisplayProgressBar("Build Manifest", "Start", 0f);
+//
+//            Settings settings = BuildScript.GetSettings();
+//            string assetRootPath = settings.assetRootPath;
+//            AssetsManifest assetsManifest = BuildScript.GetManifest();
+//            EditorUtility.DisplayProgressBar("Build Manifest", "Read ManifestRule", 0f);
+//            ManifestRule manifestRule = BuildScript.GetAsset<ManifestRule>(Constnat.ManifestRulePath);
+//            EditorUtility.DisplayProgressBar("Build Manifest", "Read ManifestRule", 1f);
+//
+//            if (string.IsNullOrEmpty(assetsManifest.downloadURL))
+//                assetsManifest.downloadURL = BuildScript.GetServerURL();
+//
+//            assetsManifest.assets = new AssetData[0];
+//            assetsManifest.dirs = new string[0];
+//            assetsManifest.bundles = new string[0];
+//            string[] ignores = manifestRule.ignorePaths.ToArray();
+//            int number = 0;
+//            for (int i = 0; i < manifestRule.ruleInfos.Count; i++)
+//            {
+//                var ruleInfo = manifestRule.ruleInfos[i];
+//                var path = ruleInfo.path;
+//                EditorUtility.DisplayCancelableProgressBar("Build Manifest", path, i * 1f / manifestRule.ruleInfos.Count);
+//                 
+//                if (ruleInfo.buildType != buildType|| IsIgnore(path, ignores))
+//                {
+//                    continue;
+//                }
+//                number++;
+//                if(!path.EndsWith("/")|| !path.EndsWith(@"\"))
+//                {
+//                    path += "/";
+//                }
+//                switch (ruleInfo.ruleType)
+//                {
+//                    case RuleType.RootDir: 
+//                        SetAssetsWithDir(path, ignores, assetsManifest, true);
+//                        break;
+//                    case RuleType.Dir:
+//                        SetAssetsWithDir(path, ignores, assetsManifest, false);
+//                        break;
+//                    case RuleType.File:
+//                        SetAssetsWithFile(path, ignores, assetsManifest);
+//                        break;
+//                    case RuleType.FileName:
+//                        SetAssetsWithName(path, ignores, assetsManifest);
+//                        break;
+//                    default:
+//                        break;
+//                }
+//            }
+//
+//            EditorUtility.ClearProgressBar();
+//
+//            EditorUtility.SetDirty(assetsManifest);
+//            AssetDatabase.SaveAssets();
+//
+//            Debug.LogFormat("build manifest complete , assets count : {0} , bundles count : {1} .",
+//                assetsManifest.assets.Length, assetsManifest.bundles.Length);
+//        }
 
         private static void SetAssetsWithDir(string path, string[]ignores, AssetsManifest assetsManifest,   bool isRootDir)
         {

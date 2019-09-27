@@ -66,26 +66,26 @@ public class CustomTest : MonoBehaviour
         //     Debug.Log("加载完成 "+obj);  
         // }, this);
 
-        ResMgr.Instance.LoadCache("common", new LoadParam[] {
-            new LoadParam("Prefabs/UIRoot",LoadType.PREFAB){isInstant=true },
-            new LoadParam("Prefabs/UIRoot2",LoadType.PREFAB){isInstant=true },
-            new LoadParam("Prefabs/UIRoot3",LoadType.PREFAB){isInstant=true },
-            new LoadParam("Prefabs/UIRoot4",LoadType.PREFAB){isInstant=true },
-            new LoadParam("Prefabs/UIRoot5",LoadType.PREFAB){isInstant=true },
-        }, () =>
-        {
-            Debug.Log("加载完成");
-            Instant("Prefabs/UIRoot", LoadType.PREFAB);
-
-        });
+//        ResMgr.Instance.LoadCache("common", new LoadParam[] {
+//            new LoadParam("Prefabs/UIRoot",LoadType.PREFAB){isInstant=true },
+//            new LoadParam("Prefabs/UIRoot2",LoadType.PREFAB){isInstant=true },
+//            new LoadParam("Prefabs/UIRoot3",LoadType.PREFAB){isInstant=true },
+//            new LoadParam("Prefabs/UIRoot4",LoadType.PREFAB){isInstant=true },
+//            new LoadParam("Prefabs/UIRoot5",LoadType.PREFAB){isInstant=true },
+//        }, () =>
+//        {
+//            Debug.Log("加载完成");
+//            Instant("Prefabs/UIRoot", LoadType.PREFAB);
+//
+//        });
     }
     public Transform parent;
     private void Instant(string path, LoadType loadType)
     {
-        GameObject go = ResMgr.Instance.GetCache<GameObject>(path, loadType, parent, "common");
-        if (go)
-        {
-            GameObject.Instantiate(go, parent);
-        }
+//        GameObject go = ResMgr.Instance.GetCache<GameObject>(path, loadType, parent, "common");
+//        if (go)
+//        {
+//            GameObject.Instantiate(go, parent);
+//        }
     }
 }

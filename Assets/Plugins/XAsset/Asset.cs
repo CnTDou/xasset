@@ -46,7 +46,7 @@ namespace Plugins.XAsset
         Unload,
     }
 
-    public class Asset : Reference, IEnumerator
+    public partial class Asset : Reference, IEnumerator
     {
         private List<Object> _requires;
         public Type assetType;

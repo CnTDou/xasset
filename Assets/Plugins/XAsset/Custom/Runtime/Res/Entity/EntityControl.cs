@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Plugins.XAsset;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 public class EntityControl
-{
+{ 
     private Dictionary<int, EntityInfo> entityDic = new Dictionary<int, EntityInfo>();
     static int sEntityId;
 
     private void LoadAsycn(string path, Object user, Action<GameObject> callback)
     {
-        ResMgr.Instance.LoadPrefab(path,user,callback);
+        ResMgr.Instance.LoadPrefab(path, user, callback);
     }
 
     public int CreateEntity(string path, Transform parent, bool instantiateInWorldSpace,
@@ -20,16 +21,16 @@ public class EntityControl
         int id = sEntityId++;
         LoadAsycn(path, parent, (asset) =>
         {
-            if (asset && asset is GameObject)
+            if (asset)
             {
                 GameObject entity = null;
                 if (parent)
                 {
-                    entity = GameObject.Instantiate(asset as GameObject, parent, instantiateInWorldSpace);
+                    entity = GameObject.Instantiate(asset, parent, instantiateInWorldSpace);
                 }
                 else
                 {
-                    entity = GameObject.Instantiate(asset as GameObject);
+                    entity = GameObject.Instantiate(asset);
                 }
 
                 EntityInfo entityInfo = entity.AddComponent<EntityInfo>();
